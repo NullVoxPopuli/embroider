@@ -30,9 +30,9 @@ appScenarios
         `,
       },
       'import-from-npm.js': `
-        export default async function() { 
+        export default async function() {
           let { message } = await import('third-party');
-          return message() 
+          return message()
         }
         `,
     });
@@ -84,6 +84,56 @@ appScenarios
               assert.equal(await example(), 'content from third-party');
              });
            });
+          `,
+        },
+      },
+    });
+  })
+  .forEachScenario(scenario => {
+    Qmodule(scenario.name, function (hooks) {
+      let app: PreparedApp;
+      hooks.before(async () => {
+        app = await scenario.prepare();
+      });
+
+      test(`yarn test`, async function (assert) {
+        let result = await app.execute('yarn test');
+        assert.equal(result.exitCode, 0, result.output);
+      });
+    });
+  });
+
+appScenarios
+  .map('v2 re-export ember-debug', project => {
+    let addon = baseV2Addon();
+    addon.pkg.name = 'v2-addon';
+
+    merge(addon.files, {
+      'index.js': `
+        export { deprecate as didItWork } from '@ember/debug';
+      `,
+    });
+
+    project.addDevDependency(addon);
+
+    merge(project.files, {
+      tests: {
+        unit: {
+          'import-test.js': `
+            import { module, test } from 'qunit';
+            import { visit } from '@ember/test-helpers';
+            import { setupApplicationTest } from 'ember-qunit';
+            import { getOwnConfig } from '@embroider/macros';
+
+            import { didItWork } from 'v2-addon';
+
+            module('Unit | exists', function(hooks) {
+              setupApplicationTest(hooks);
+
+              test('hello world', async function(assert) {
+                assert.ok(didItWork, 'success');
+              });
+            });
           `,
         },
       },
