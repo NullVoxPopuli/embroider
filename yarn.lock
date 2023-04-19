@@ -6001,10 +6001,10 @@ chalk@^5.0.0, chalk@^5.2.0:
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-5.2.0.tgz#249623b7d66869c673699fb66d65723e54dfcfb3"
   integrity sha512-ree3Gqw/nazQAPuJJEy+avdl7QfZMcUvmHIKgEZkGL+xOBzRvup5Hxo6LHuMceSxOabuJLJm5Yp/92R9eMmMvA==
 
-changeset-recover@0.1.0-beta.5:
-  version "0.1.0-beta.5"
-  resolved "https://registry.yarnpkg.com/changeset-recover/-/changeset-recover-0.1.0-beta.5.tgz#d3f770052ab7abcc8b245fe1e559e87fcbe998c4"
-  integrity sha512-T+zNG3X5VbAUuyYOoTWWcfCUzYQMZ87EKZI7MFbLIMVkZkRWv9SJpedztCLrmdVWGVYd3R1ULevqjH6JpJDU+w==
+changeset-recover@0.1.0-beta.7:
+  version "0.1.0-beta.7"
+  resolved "https://registry.yarnpkg.com/changeset-recover/-/changeset-recover-0.1.0-beta.7.tgz#b3ad6beef958a5696dc9d70ee789a48dead72059"
+  integrity sha512-XaBvC/o+BTWd3wNU5ChBcNyBh1cjriTJ5tAdFmq6RsOoQNDOTUChUwl8VgLX9ko8g+lZXAjqDlOin/vuhLdAgA==
   dependencies:
     "@octokit/core" "^4.2.0"
     chalk "^5.2.0"
