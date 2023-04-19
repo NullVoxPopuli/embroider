@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/setup
       - run: npx changeset-recover@beta --non-interactive --owner embroider-build
-        with:
+        env:
           # avoiding API read throttling
           GITHUB_TOKEN: ${{ GITHUB_TOKEN }}
       - uses: peter-evans/create-pull-request@v4
