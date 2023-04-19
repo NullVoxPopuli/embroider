@@ -34,7 +34,7 @@ jobs:
       - run: npx changeset-recover@beta --non-interactive --owner embroider-build
         env:
           # avoiding API read throttling
-          GITHUB_TOKEN: ${{ GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
