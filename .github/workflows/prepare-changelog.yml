@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/setup
         # specify the owner so that forks with their origin poiting at the fork still query the upstream PR list
-      - run: npx changeset-recover@beta --non-interactive --owner embroider-build
+      - run: yarn prepare:changelog --non-interactive
         env:
           # avoiding API read throttling
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
