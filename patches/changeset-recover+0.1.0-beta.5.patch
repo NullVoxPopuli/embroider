@@ -12,7 +12,7 @@ index a09450b..a85389c 100644
      `---\n` +
      `# each of these should be one of "patch", "minor", "major"\n` +
 diff --git a/node_modules/changeset-recover/src/github.js b/node_modules/changeset-recover/src/github.js
-index 8d9e723..942b39e 100644
+index 8d9e723..4a66625 100644
 --- a/node_modules/changeset-recover/src/github.js
 +++ b/node_modules/changeset-recover/src/github.js
 @@ -22,6 +22,8 @@ export async function getMergedPRs(cwd = process.cwd(), owner = null) {
@@ -24,7 +24,16 @@ index 8d9e723..942b39e 100644
    return response.data;
  }
  
-@@ -72,6 +74,8 @@ export async function getOwner(cwd = process.cwd()) {
+@@ -68,10 +70,16 @@ export async function getOwner(cwd = process.cwd()) {
+     cwd,
+   });
+ 
+-  let match = /github\.com(:|\/)(?<org>[^/]+)\/(?<repo>[^.]+)\.git/.exec(
++  // 3 Formats
++  //   https://github.com/NullVoxPopuli/embroider
++  //   https://github.com/NullVoxPopuli/embroider.git
++  //   git@github.com:NullVoxPopuli/embroider.git
++  let match = /github\.com(:|\/)(?<org>[^/]+)\/(?<repo>[^.]+)(\.git)?/.exec(
      stdout
    );
  
