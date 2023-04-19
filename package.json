@@ -30,7 +30,7 @@
     "release": "changeset publish",
     "clean": "git clean -x -f",
     "compile": "tsc",
-    "prepare:changelog": "changeset-recover --owner embroider-build",
+    "prepare:changelog": "changeset-recover --owner embroider-build --only-prs",
     "lint": "concurrently 'npm:lint:*(!fix)' --names 'lint:'",
     "lint:fix": "concurrently 'npm:lint:*:fix' --names 'fix:'",
     "lint:eslint": "eslint . --cache",
