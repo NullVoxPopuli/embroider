@@ -1,3 +1,17 @@
+diff --git a/node_modules/changeset-recover/src/bin.js b/node_modules/changeset-recover/src/bin.js
+index c2c5cdf..a677e90 100755
+--- a/node_modules/changeset-recover/src/bin.js
++++ b/node_modules/changeset-recover/src/bin.js
+@@ -49,7 +49,8 @@ yargs(hideBin(process.argv))
+         args.base,
+         args.main,
+         args.path,
+-        args.limit
++        args.limit,
++        args.owner,
+       );
+       let changesets = await getChangesetList(args.path);
+       let untrackedChanges = omitTrackedChanges(changes, changesets);
 diff --git a/node_modules/changeset-recover/src/changesets.js b/node_modules/changeset-recover/src/changesets.js
 index a09450b..a85389c 100644
 --- a/node_modules/changeset-recover/src/changesets.js
