@@ -5,8 +5,8 @@ index a09450b..22e3bcb 100644
 @@ -27,6 +27,8 @@ export async function writeChangeset(change, cwd = process.cwd()) {
        ` by ${authorLinks}`;
    }
- 
-+  console.log(change.commit, { pr: change.pr?.title, num: change.pr?.number, authorLinks, message });
+
++  console.log(change.commit, { pr: change.pr?.title, num: change.pr?.number, message });
 +
    let text =
      `---\n` +
