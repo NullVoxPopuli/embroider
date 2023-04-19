@@ -12,10 +12,23 @@ index a09450b..a85389c 100644
      `---\n` +
      `# each of these should be one of "patch", "minor", "major"\n` +
 diff --git a/node_modules/changeset-recover/src/github.js b/node_modules/changeset-recover/src/github.js
-index 8d9e723..4a66625 100644
+index 8d9e723..54ae70a 100644
 --- a/node_modules/changeset-recover/src/github.js
 +++ b/node_modules/changeset-recover/src/github.js
-@@ -22,6 +22,8 @@ export async function getMergedPRs(cwd = process.cwd(), owner = null) {
+@@ -6,11 +6,8 @@ let octokit = new Octokit({ auth: process.env['GITHUB_TOKEN'] });
+ export async function getMergedPRs(cwd = process.cwd(), owner = null) {
+   let { org, repo } = await getOwner(cwd);
+ 
+-  if (!org || !repo) {
+-    return [];
+-  }
+-
+   if (owner) {
++    console.debug(`Repo: ${org}/${repo} overridden with ${owner}/${repo}`);
+     org = owner;
+   }
+ 
+@@ -22,6 +19,8 @@ export async function getMergedPRs(cwd = process.cwd(), owner = null) {
        '&per_page=200'
    );
  
@@ -24,7 +37,29 @@ index 8d9e723..4a66625 100644
    return response.data;
  }
  
-@@ -68,10 +70,16 @@ export async function getOwner(cwd = process.cwd()) {
+@@ -31,11 +30,8 @@ export async function getMergedPRs(cwd = process.cwd(), owner = null) {
+ export async function getCommits(pr, owner = null, cwd = process.cwd()) {
+   let { org, repo } = await getOwner(cwd);
+ 
+-  if (!org || !repo) {
+-    return [];
+-  }
+-
+   if (owner) {
++    console.debug(`Repo: ${org}/${repo} overridden with ${owner}/${repo}`);
+     org = owner;
+   }
+ 
+@@ -59,7 +55,7 @@ export function extractPRNumberFromCommitMessage(message) {
+ 
+ /**
+  * @param {string} cwd current working directory, defaults to process.cwd()
+- * @returns {Promise<{ org?: string | undefined; repo?: string | undefined}>}
++ * @returns {Promise<{ org: string; repo: string | undefined}>}
+  */
+ export async function getOwner(cwd = process.cwd()) {
+   // ❯ git config --get remote.origin.url
+@@ -68,15 +64,26 @@ export async function getOwner(cwd = process.cwd()) {
      cwd,
    });
  
@@ -40,5 +75,29 @@ index 8d9e723..4a66625 100644
 +  console.log({ match, stdout });
 +
    if (!match) {
-     return {};
+-    return {};
++    throw new Error(`URL was not recognized. Received: ${stdout}`);
    }
+ 
+   let { org, repo } = match.groups || {};
+ 
++  if (!org || !repo) {
++    throw new Error(`Regex failure: org (${org}) or repo (${repo}) were not detected from the URL: ${stdout}`);
++
++  }
++
+   return { org, repo };
+ }
+diff --git a/node_modules/changeset-recover/src/workspaces.js b/node_modules/changeset-recover/src/workspaces.js
+index d058cc8..c240f64 100644
+--- a/node_modules/changeset-recover/src/workspaces.js
++++ b/node_modules/changeset-recover/src/workspaces.js
+@@ -80,7 +80,7 @@ export async function getGroupedChanges(
+ 
+   console.debug('Calculating changes for ref: ' + tag);
+ 
+-  let prs = await getMergedPRs(cwd);
++  let prs = await getMergedPRs(cwd, owner);
+   let commits = await mergesToBranch(tag, branch, cwd);
+   let projects = await getProjects(cwd);
+ 
