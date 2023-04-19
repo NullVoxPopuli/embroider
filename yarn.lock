@@ -6001,15 +6001,16 @@ chalk@^5.0.0, chalk@^5.2.0:
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-5.2.0.tgz#249623b7d66869c673699fb66d65723e54dfcfb3"
   integrity sha512-ree3Gqw/nazQAPuJJEy+avdl7QfZMcUvmHIKgEZkGL+xOBzRvup5Hxo6LHuMceSxOabuJLJm5Yp/92R9eMmMvA==
 
-changeset-recover@0.1.0-beta.7:
-  version "0.1.0-beta.7"
-  resolved "https://registry.yarnpkg.com/changeset-recover/-/changeset-recover-0.1.0-beta.7.tgz#b3ad6beef958a5696dc9d70ee789a48dead72059"
-  integrity sha512-XaBvC/o+BTWd3wNU5ChBcNyBh1cjriTJ5tAdFmq6RsOoQNDOTUChUwl8VgLX9ko8g+lZXAjqDlOin/vuhLdAgA==
+changeset-recover@0.1.0-beta.8:
+  version "0.1.0-beta.8"
+  resolved "https://registry.yarnpkg.com/changeset-recover/-/changeset-recover-0.1.0-beta.8.tgz#6fcef6f1384af23f3182494b34cbcdafb8771630"
+  integrity sha512-ZeVu4TQdL6fK6qGRDbAioFSolvAD1woiU5pYxcPpFbn1rH8lSLm1FX0bIRD1WmJtiZ5bA6bTLvApKynnILPivg==
   dependencies:
     "@octokit/core" "^4.2.0"
     chalk "^5.2.0"
     ember-apply "^2.6.2"
     execa "^6.1.0"
+    fs-extra "^11.1.1"
     globby "^13.1.4"
     inquirer "^9.1.4"
     inquirer-tree-prompt "github:NullVoxPopuli/inquirer-tree-prompt#esm-ify"
