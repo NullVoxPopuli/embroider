@@ -1,13 +1,26 @@
 diff --git a/node_modules/changeset-recover/src/changesets.js b/node_modules/changeset-recover/src/changesets.js
-index a09450b..22e3bcb 100644
+index a09450b..a85389c 100644
 --- a/node_modules/changeset-recover/src/changesets.js
 +++ b/node_modules/changeset-recover/src/changesets.js
 @@ -27,6 +27,8 @@ export async function writeChangeset(change, cwd = process.cwd()) {
        ` by ${authorLinks}`;
    }
-
+ 
 +  console.log(change.commit, { pr: change.pr?.title, num: change.pr?.number, message });
 +
    let text =
      `---\n` +
      `# each of these should be one of "patch", "minor", "major"\n` +
+diff --git a/node_modules/changeset-recover/src/github.js b/node_modules/changeset-recover/src/github.js
+index 8d9e723..ed5a50a 100644
+--- a/node_modules/changeset-recover/src/github.js
++++ b/node_modules/changeset-recover/src/github.js
+@@ -22,6 +22,8 @@ export async function getMergedPRs(cwd = process.cwd(), owner = null) {
+       '&per_page=200'
+   );
+ 
++  console.log('get PRs', response);
++
+   return response.data;
+ }
+ 
