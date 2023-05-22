@@ -29,7 +29,7 @@ jobs:
 
       - id: explanation
         run: |
-          plan=$(pnpm embroider-release explain-plan)
+          plan=$(node ./test-packages/release/src/cli.js explain-plan)
           echo "text=$plan" >> $GITHUB_OUTPUT
           pnpm embroider-release prepare
         env:
