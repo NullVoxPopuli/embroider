@@ -29,9 +29,9 @@ jobs:
 
       - id: explanation
         run: |
-          plan=$(pnpm exec embroider-release explain-plan)
+          plan=$(pnpm embroider-release explain-plan)
           echo "text=$plan" >> $GITHUB_OUTPUT
-      - run: pnpm exec embroider-release prepare
+          pnpm embroider-release prepare
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
 
