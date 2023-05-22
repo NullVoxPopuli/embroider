@@ -54,6 +54,7 @@ jobs:
           git add -A .
           git commit -am "Automated update"
           git push origin ${{ env.branch }} --force
+          git show HEAD
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
 
