@@ -42,7 +42,7 @@ jobs:
           node ./test-packages/release/src/cli.js prepare
           # Don't print this, because it can be very large
           set +x
-          echo "text=$plan" >> $GITHUB_OUTPUT
+          echo "text=$( echo $plan )" >> $GITHUB_OUTPUT
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
 
