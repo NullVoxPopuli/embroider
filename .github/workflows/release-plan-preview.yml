@@ -43,6 +43,8 @@ jobs:
           # Don't print this, because it can be very large
           set +x
           echo "text=$( echo $plan )" >> $GITHUB_OUTPUT
+          # For debugging
+          git diff
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
 
