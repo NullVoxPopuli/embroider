@@ -6,7 +6,7 @@ on:
 
 env:
   VOLTA_FEATURE_PNPM: 1
-  branch: "gh-workflow/release-preview"
+  branch: "embroider-release-preview"
   title: "Preview Release"
 
 jobs:
