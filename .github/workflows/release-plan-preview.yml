@@ -39,8 +39,6 @@ jobs:
           set +e
           plan=$(node ./test-packages/release/src/cli.js explain-plan)
           echo "text=$plan" >> $GITHUB_OUTPUT
-          set -e
-          pnpm embroider-release prepare
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
       - name: "Prepare"
@@ -49,7 +47,6 @@ jobs:
           # (this captures all of stdout/stderr)
           set +e
           pnpm embroider-release prepare
-          set -e
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
 
