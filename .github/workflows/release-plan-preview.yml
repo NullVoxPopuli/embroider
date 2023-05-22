@@ -47,6 +47,7 @@ jobs:
           # (this captures all of stdout/stderr)
           set +e
           node ./test-packages/release/src/cli.js prepare
+          exit 0
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
 
