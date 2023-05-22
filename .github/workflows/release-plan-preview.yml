@@ -33,8 +33,12 @@ jobs:
 
       - id: explanation
         run: |
+          # ignore errors so that the PR that we update displays the error
+          # (this captures all of stdout/stderr)
+          set +e
           plan=$(node ./test-packages/release/src/cli.js explain-plan)
           echo "text=$plan" >> $GITHUB_OUTPUT
+          set -e
           pnpm embroider-release prepare
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
