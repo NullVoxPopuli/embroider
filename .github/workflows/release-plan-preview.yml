@@ -31,15 +31,15 @@ jobs:
           set -e
           git switch -c ${{ env.branch }}
 
-      - name: "Generate Explanation"
+      - name: "Generate Explanation and Prep Changelogs"
         id: explanation
         run: |
+          # Print each command out to the terminal before running
+          set -x
+          # For an unknown reason the `pnpm embroider-release` bin is not
+          # wired up as it is locally.
           plan=$(node ./test-packages/release/src/cli.js explain-plan)
           echo "text=$plan" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Prepare"
-        run: |
           node ./test-packages/release/src/cli.js prepare
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
