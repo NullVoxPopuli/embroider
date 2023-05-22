@@ -24,13 +24,6 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup
-      - name: 'Prepare git branch'
-        run: |
-          set +e
-          git branch -D ${{ env.branch }}
-          set -e
-          git switch -c ${{ env.branch }}
-
       - name: "Generate Explanation and Prep Changelogs"
         id: explanation
         run: |
