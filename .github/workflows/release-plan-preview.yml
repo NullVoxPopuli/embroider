@@ -30,7 +30,7 @@ jobs:
         run: |
           echo "text=$(pnpm embroider-release explain-plan)" >> $GITHUB_OUTPUT
       - run: pnpm embroider-release prepare
-        with:
+        env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
 
       - run: |
