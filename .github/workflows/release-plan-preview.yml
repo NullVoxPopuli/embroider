@@ -39,8 +39,10 @@ jobs:
           # For an unknown reason the `pnpm embroider-release` bin is not
           # wired up as it is locally.
           plan=$(node ./test-packages/release/src/cli.js explain-plan)
-          echo "text=$plan" >> $GITHUB_OUTPUT
           node ./test-packages/release/src/cli.js prepare
+          # Don't print this, because it can be very large
+          set +x
+          echo "text=$plan" >> $GITHUB_OUTPUT
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
 
