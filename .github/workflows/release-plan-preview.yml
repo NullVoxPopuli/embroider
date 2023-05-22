@@ -51,7 +51,7 @@ jobs:
           # For debugging
           set -x
           git diff
-          git add .
+          git add ./
           git commit -m "Automated update"
           git push origin ${{ env.branch }} --force
         env:
