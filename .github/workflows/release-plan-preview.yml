@@ -18,7 +18,8 @@ jobs:
       explanation: ${{ steps.explanation.outputs.text }}
 
     steps:
-      - uses: wyvox/action@v1
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup
       - name: 'Prepare git branch'
         run: |
           set +e
@@ -28,7 +29,7 @@ jobs:
 
       - id: explanation
         run: |
-          echo "text=$(pnpm embroider-release explain-plan)" >> $GITHUB_OUTPUT
+          echo "text=$(pnpm exec embroider-release explain-plan)" >> $GITHUB_OUTPUT
       - run: pnpm exec embroider-release prepare
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
