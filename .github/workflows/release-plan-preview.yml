@@ -34,20 +34,13 @@ jobs:
       - name: "Generate Explanation"
         id: explanation
         run: |
-          # ignore errors so that the PR that we update displays the error
-          # (this captures all of stdout/stderr)
-          set +e
           plan=$(node ./test-packages/release/src/cli.js explain-plan)
           echo "text=$plan" >> $GITHUB_OUTPUT
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
       - name: "Prepare"
         run: |
-          # ignore errors so that the PR that we update displays the error
-          # (this captures all of stdout/stderr)
-          set +e
           node ./test-packages/release/src/cli.js prepare
-          exit 0
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
 
