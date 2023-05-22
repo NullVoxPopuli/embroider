@@ -10,16 +10,15 @@ env:
   title: "Preview Release"
 
 jobs:
-  update_unstable_branch:
-    name: Update Unstable Branch
+  prepare_release_notes:
+    name: Prepare Release Notes
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
       explanation: ${{ steps.explanation.outputs.text }}
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup
+      - uses: wyvox/action@v1
       - name: 'Prepare git branch'
         run: |
           set +e
