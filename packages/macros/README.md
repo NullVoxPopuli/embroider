@@ -262,8 +262,6 @@ import { setTesting } from '@embroider/macros';
 setTesting(true);
 ```
 
-This replaces the need to use the private `window._embroider_macros_runtime_config` API. The `setTesting()` function is only available in runtime mode (development/testing builds) and will be automatically handled by the macros system.
-
 ## Glint usage
 If you are using [Glint](https://typed-ember.gitbook.io/glint/) and `environment-ember-loose`, you can add all the macros to your app at once by adding
 
