@@ -45,6 +45,14 @@ export function isTesting() {
   return Boolean(e && e.isTesting);
 }
 
+// Public API to set the testing mode at runtime
+export function setTesting(isTesting) {
+  if (!runtimeConfig.global['@embroider/macros']) {
+    runtimeConfig.global['@embroider/macros'] = {};
+  }
+  runtimeConfig.global['@embroider/macros'].isTesting = Boolean(isTesting);
+}
+
 const runtimeConfig = initializeRuntimeMacrosConfig();
 
 // this exists to be targeted by our babel plugin

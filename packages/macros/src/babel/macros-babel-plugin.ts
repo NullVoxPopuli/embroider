@@ -107,6 +107,16 @@ export default function main(context: typeof Babel): unknown {
           return;
         }
 
+        // setTesting is only available in runtime mode
+        if (callee.referencesImport('@embroider/macros', 'setTesting')) {
+          if (state.opts.mode !== 'run-time') {
+            throw error(path, `setTesting can only be used in runtime mode (development/testing builds)`);
+          }
+          state.calledIdentifiers.add(callee.node);
+          callee.replaceWith(state.importUtil.import(callee, state.pathToOurAddon('runtime'), 'setTesting'));
+          return;
+        }
+
         let result = new Evaluator({ state }).evaluateMacroCall(path);
         if (result.confident) {
           state.calledIdentifiers.add(callee.node);
@@ -209,6 +219,7 @@ export default function main(context: typeof Babel): unknown {
         'isDevelopingApp',
         'isDevelopingThisPackage',
         'isTesting',
+        'setTesting',
       ]) {
         if (path.referencesImport('@embroider/macros', candidate) && !state.calledIdentifiers.has(path.node)) {
           throw error(path, `You can only use ${candidate} as a function call`);
