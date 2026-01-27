@@ -16,7 +16,7 @@
   "main": "src/index.js",
   "exports": {
     ".": {
-      "browser": "./src/index.js",
+      "browser": "./src/addon/runtime.js",
       "default": "./src/index.js"
     },
     "./babel": "./src/babel.js",
