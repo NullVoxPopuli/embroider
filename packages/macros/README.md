@@ -256,7 +256,7 @@ Note that these can be used in combination - e.g. if you run tests in the produc
 To enable test-only code paths at runtime, you can use the `setTesting()` function. This is particularly useful in test setup files to control the behavior of the `isTesting()` macro in development builds.
 
 ```js
-import { setTesting } from '@embroider/macros/test-support';
+import { setTesting } from '@embroider/macros';
 
 // In your test setup file (e.g., test-helper.js):
 setTesting(true);

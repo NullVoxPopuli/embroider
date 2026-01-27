@@ -20,7 +20,6 @@
       "default": "./src/index.js"
     },
     "./babel": "./src/babel.js",
-    "./test-support": "./src/test-support.js",
     "./src/*": "./src/*.js",
     "./src/*.js": "./src/*.js"
   },
