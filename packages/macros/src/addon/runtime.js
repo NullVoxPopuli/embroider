@@ -47,6 +47,9 @@ export function isTesting() {
 
 // Public API to set the testing mode at runtime
 export function setTesting(isTesting) {
+  if (!runtimeConfig.global) {
+    runtimeConfig.global = {};
+  }
   if (!runtimeConfig.global['@embroider/macros']) {
     runtimeConfig.global['@embroider/macros'] = {};
   }
