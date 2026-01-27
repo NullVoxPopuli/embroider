@@ -107,13 +107,33 @@ export default function main(context: typeof Babel): unknown {
           return;
         }
 
-        // setTesting is only available in runtime mode
+        // setTesting sets the isTesting config value
         if (callee.referencesImport('@embroider/macros', 'setTesting')) {
-          if (state.opts.mode !== 'run-time') {
-            throw error(path, `setTesting can only be used in runtime mode (development/testing builds)`);
-          }
           state.calledIdentifiers.add(callee.node);
-          callee.replaceWith(state.importUtil.import(callee, state.pathToOurAddon('runtime'), 'setTesting'));
+          
+          if (state.opts.mode === 'run-time') {
+            // In runtime mode, replace with the runtime implementation
+            callee.replaceWith(state.importUtil.import(callee, state.pathToOurAddon('runtime'), 'setTesting'));
+          } else {
+            // In compile-time mode, evaluate the argument and set the config,
+            // then remove the call since it's a build-time operation
+            let args = path.get('arguments');
+            if (args.length > 0) {
+              let arg = args[0];
+              let evaluator = new Evaluator({ state });
+              let result = evaluator.evaluate(arg);
+              if (result.confident) {
+                // Set the globalConfig value at build time
+                let macrosConfig = state.opts.globalConfig['@embroider/macros'] as any || {};
+                state.opts.globalConfig['@embroider/macros'] = {
+                  ...macrosConfig,
+                  isTesting: Boolean(result.value)
+                };
+              }
+            }
+            // Remove the call since it's a build-time operation
+            path.remove();
+          }
           return;
         }
 

@@ -46,23 +46,21 @@ describe(`setTesting macro`, function () {
         expect(run(code)).toBe(true);
       });
 
-      test('setTesting: only works in runtime mode', () => {
-        // setTesting should only work in runtime mode, in build-time mode it should throw
-        // Note: This test will only actually throw in build-time mode. In runtime mode,
-        // the transform succeeds but the check doesn't run.
-        try {
-          let code = transform(`
-            import { setTesting } from '@embroider/macros';
-            export default function() {
-              setTesting(true);
-            }
-          `);
-          // If we get here without an error, we're in runtime mode
-          // and the transform should have converted to a runtime import
+      test('setTesting: removed in build-time mode', () => {
+        let code = transform(`
+          import { setTesting } from '@embroider/macros';
+          export default function() {
+            setTesting(true);
+          }
+        `);
+        // In build-time mode, setTesting call should be removed
+        // In runtime mode, it should be transformed to runtime import
+        if (code.includes('runtime')) {
+          // Runtime mode - transformed to runtime implementation
           expect(code).toMatch(/from ['"].*runtime['"]/);
-        } catch (error: any) {
-          // If we get an error, it should be about runtime mode
-          expect(error.message).toMatch(/setTesting can only be used in runtime mode/);
+        } else {
+          // Build-time mode - call should be removed
+          expect(code).not.toMatch(/setTesting/);
         }
       });
     }),

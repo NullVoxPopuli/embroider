@@ -59,8 +59,16 @@ export function isTesting(): boolean {
   throw new Oops();
 }
 
-export function setTesting(value: boolean): void {
-  throw new Oops(value);
+export function setTesting(value: boolean = true): void {
+  // This has a runtime implementation that modifies the global config
+  if (typeof window !== 'undefined' && (window as any)._embroider_macros_runtime_config) {
+    (window as any)._embroider_macros_runtime_config.push(function(m: any) {
+      m.setGlobalConfig(
+        '@embroider/macros',
+        Object.assign({}, m.getGlobalConfig()['@embroider/macros'], { isTesting: Boolean(value) })
+      );
+    });
+  }
 }
 
 export function failBuild(message: string): void {
