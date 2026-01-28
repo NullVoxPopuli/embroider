@@ -109,7 +109,7 @@ export default function main(context: typeof Babel): unknown {
 
         if (callee.referencesImport('@embroider/macros', 'setTesting')) {
           state.calledIdentifiers.add(callee.node);
-          
+
           if (state.opts.mode === 'run-time') {
             callee.replaceWith(state.importUtil.import(callee, state.pathToOurAddon('runtime'), 'setTesting'));
           } else {
@@ -119,10 +119,10 @@ export default function main(context: typeof Babel): unknown {
               let evaluator = new Evaluator({ state });
               let result = evaluator.evaluate(arg);
               if (result.confident) {
-                let macrosConfig = state.opts.globalConfig['@embroider/macros'] as any || {};
+                let macrosConfig = (state.opts.globalConfig['@embroider/macros'] as any) || {};
                 state.opts.globalConfig['@embroider/macros'] = {
                   ...macrosConfig,
-                  isTesting: Boolean(result.value)
+                  isTesting: Boolean(result.value),
                 };
               }
             }
