@@ -113,19 +113,39 @@ export default function main(context: typeof Babel): unknown {
           if (state.opts.mode === 'run-time') {
             callee.replaceWith(state.importUtil.import(callee, state.pathToOurAddon('runtime'), 'setTesting'));
           } else {
+            // In compile-time mode, setTesting() will be compiled away
             let args = path.get('arguments');
-            if (args.length > 0) {
-              let arg = args[0];
-              let evaluator = new Evaluator({ state });
-              let result = evaluator.evaluate(arg);
-              if (result.confident) {
-                let macrosConfig = (state.opts.globalConfig['@embroider/macros'] as any) || {};
-                state.opts.globalConfig['@embroider/macros'] = {
-                  ...macrosConfig,
-                  isTesting: Boolean(result.value),
-                };
-              }
+            if (args.length === 0) {
+              throw error(path, `setTesting() requires a boolean argument`);
             }
+
+            let arg = args[0];
+            let evaluator = new Evaluator({ state });
+            let result = evaluator.evaluate(arg);
+            
+            if (!result.confident) {
+              throw error(
+                arg,
+                `setTesting() can only be called with a statically analyzable value in compile-time mode. The argument must be a literal boolean (true or false), not a variable or expression that can't be evaluated at build time.`
+              );
+            }
+
+            // Get the current isTesting value from global config
+            let macrosConfig = (state.opts.globalConfig['@embroider/macros'] as any) || {};
+            let currentIsTesting = Boolean(macrosConfig.isTesting);
+            let newIsTesting = Boolean(result.value);
+
+            // In compile-time mode, setTesting must match the current global config
+            if (currentIsTesting !== newIsTesting) {
+              throw error(
+                path,
+                `setTesting(${newIsTesting}) cannot change the testing state in compile-time mode. The current global config has isTesting=${currentIsTesting}. ` +
+                `setTesting() calls are compiled away at build time, so they cannot change the testing state. ` +
+                `If you need to change the testing state at runtime, use runtime mode instead.`
+              );
+            }
+
+            // Value matches, so we can safely remove the call
             path.remove();
           }
           return;
