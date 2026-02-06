@@ -29,7 +29,6 @@ describe(`setTesting macro`, function () {
             return true;
           }
         `);
-        // Should transform to runtime import
         expect(code).toMatch(/from ['"].*runtime['"]/);
         expect(run(code)).toBe(true);
       });
@@ -47,19 +46,16 @@ describe(`setTesting macro`, function () {
       });
 
       buildTimeTest('setTesting: removed in build-time mode when value matches global config', () => {
-        // Default global config has isTesting = false
         let code = transform(`
           import { setTesting } from '@embroider/macros';
           export default function() {
             setTesting(false);
           }
         `);
-        // In build-time mode, setTesting call should be removed if value matches
         expect(code).not.toMatch(/setTesting/);
       });
 
       buildTimeTest('setTesting: throws error when value does not match global config', () => {
-        // Default global config has isTesting = false, trying to set to true should fail
         expect(() => {
           transform(`
             import { setTesting } from '@embroider/macros';
@@ -94,7 +90,6 @@ describe(`setTesting macro`, function () {
       });
 
       buildTimeTest('setTesting: allows setting to true when global config is already true', () => {
-        // Create a new config with isTesting = true
         macrosConfig = MacrosConfig.for({}, resolve(__dirname, '..', '..'));
         applyMode(macrosConfig);
         macrosConfig.setGlobalConfig(__filename, '@embroider/macros', { isTesting: true });
@@ -106,7 +101,6 @@ describe(`setTesting macro`, function () {
             setTesting(true);
           }
         `);
-        // Should be removed without error
         expect(code).not.toMatch(/setTesting/);
       });
     }),
