@@ -113,7 +113,6 @@ export default function main(context: typeof Babel): unknown {
           if (state.opts.mode === 'run-time') {
             callee.replaceWith(state.importUtil.import(callee, state.pathToOurAddon('runtime'), 'setTesting'));
           } else {
-            // In compile-time mode, setTesting() will be compiled away
             let args = path.get('arguments');
             if (args.length === 0) {
               throw error(path, `setTesting() requires a boolean argument`);
@@ -130,12 +129,10 @@ export default function main(context: typeof Babel): unknown {
               );
             }
 
-            // Get the current isTesting value from global config
             let macrosConfig = (state.opts.globalConfig['@embroider/macros'] as any) || {};
             let currentIsTesting = Boolean(macrosConfig.isTesting);
             let newIsTesting = Boolean(result.value);
 
-            // In compile-time mode, setTesting must match the current global config
             if (currentIsTesting !== newIsTesting) {
               throw error(
                 path,
@@ -145,7 +142,6 @@ export default function main(context: typeof Babel): unknown {
               );
             }
 
-            // Value matches, so we can safely remove the call
             path.remove();
           }
           return;
