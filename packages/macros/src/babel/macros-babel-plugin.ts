@@ -122,7 +122,7 @@ export default function main(context: typeof Babel): unknown {
             let arg = args[0];
             let evaluator = new Evaluator({ state });
             let result = evaluator.evaluate(arg);
-            
+
             if (!result.confident) {
               throw error(
                 arg,
@@ -140,8 +140,8 @@ export default function main(context: typeof Babel): unknown {
               throw error(
                 path,
                 `setTesting(${newIsTesting}) cannot change the testing state in compile-time mode. The current global config has isTesting=${currentIsTesting}. ` +
-                `setTesting() calls are compiled away at build time, so they cannot change the testing state. ` +
-                `If you need to change the testing state at runtime, use runtime mode instead.`
+                  `setTesting() calls are compiled away at build time, so they cannot change the testing state. ` +
+                  `If you need to change the testing state at runtime, use runtime mode instead.`
               );
             }
 
