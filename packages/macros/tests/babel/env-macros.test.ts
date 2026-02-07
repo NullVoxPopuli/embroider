@@ -70,7 +70,7 @@ describe(`env macros`, function () {
             }
           `);
           expect(run(code)).toBe(true);
-          expect(code).toMatch(/return true/);
+          expect(code).toMatch(/return isTesting\d*\(\)/);
         });
 
         runTimeTest('isTesting: access value', () => {
@@ -97,8 +97,8 @@ describe(`env macros`, function () {
           `);
           expect(run(code)).toBe('yes');
           expect(code).toMatch(/return 'yes'/);
-          expect(code).not.toMatch(/return 'no'/);
-          expect(code).not.toMatch(/isTesting\d*\(\)/);
+          expect(code).toMatch(/return 'no'/);
+          expect(code).toMatch(/isTesting\d*\(\)/);
         });
 
         runTimeTest('isTesting: use within conditional', () => {

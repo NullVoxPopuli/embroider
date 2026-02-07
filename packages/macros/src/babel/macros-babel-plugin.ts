@@ -99,9 +99,9 @@ export default function main(context: typeof Babel): unknown {
           return;
         }
 
-        // isTesting can have a runtime implementation. At compile time it
-        // instead falls through to evaluateMacroCall.
-        if (callee.referencesImport('@embroider/macros', 'isTesting') && state.opts.mode === 'run-time') {
+        // isTesting() always needs a runtime implementation so that setTesting()
+        // can change the value at runtime
+        if (callee.referencesImport('@embroider/macros', 'isTesting')) {
           state.calledIdentifiers.add(callee.node);
           callee.replaceWith(state.importUtil.import(callee, state.pathToOurAddon('runtime'), 'isTesting'));
           return;
