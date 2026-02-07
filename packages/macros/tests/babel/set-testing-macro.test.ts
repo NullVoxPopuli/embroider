@@ -45,51 +45,48 @@ describe(`setTesting macro`, function () {
         expect(run(code)).toBe(true);
       });
 
-      buildTimeTest('setTesting: removed in build-time mode when value matches global config', () => {
+      buildTimeTest('setTesting: uses runtime implementation in build-time mode', () => {
         let code = transform(`
           import { setTesting } from '@embroider/macros';
           export default function() {
             setTesting(false);
           }
         `);
-        expect(code).not.toMatch(/setTesting/);
+        expect(code).toMatch(/from ['"].*runtime['"]/);
       });
 
-      buildTimeTest('setTesting: throws error when value does not match global config', () => {
-        expect(() => {
-          transform(`
-            import { setTesting } from '@embroider/macros';
-            export default function() {
-              setTesting(true);
-            }
-          `);
-        }).toThrow(/cannot change the testing state in compile-time mode/);
+      buildTimeTest('setTesting: uses runtime implementation even when value does not match global config', () => {
+        let code = transform(`
+          import { setTesting } from '@embroider/macros';
+          export default function() {
+            setTesting(true);
+          }
+        `);
+        expect(code).toMatch(/from ['"].*runtime['"]/);
       });
 
-      buildTimeTest('setTesting: throws error when called without arguments', () => {
-        expect(() => {
-          transform(`
-            import { setTesting } from '@embroider/macros';
-            export default function() {
-              setTesting();
-            }
-          `);
-        }).toThrow(/requires a boolean argument/);
+      buildTimeTest('setTesting: uses runtime implementation when called without arguments', () => {
+        let code = transform(`
+          import { setTesting } from '@embroider/macros';
+          export default function() {
+            setTesting();
+          }
+        `);
+        expect(code).toMatch(/from ['"].*runtime['"]/);
       });
 
-      buildTimeTest('setTesting: throws error when argument is not statically analyzable', () => {
-        expect(() => {
-          transform(`
-            import { setTesting } from '@embroider/macros';
-            const myValue = true;
-            export default function() {
-              setTesting(myValue);
-            }
-          `);
-        }).toThrow(/can only be called with a statically analyzable value/);
+      buildTimeTest('setTesting: uses runtime implementation when argument is not statically analyzable', () => {
+        let code = transform(`
+          import { setTesting } from '@embroider/macros';
+          const myValue = true;
+          export default function() {
+            setTesting(myValue);
+          }
+        `);
+        expect(code).toMatch(/from ['"].*runtime['"]/);
       });
 
-      buildTimeTest('setTesting: allows setting to true when global config is already true', () => {
+      buildTimeTest('setTesting: uses runtime implementation when global config is already true', () => {
         macrosConfig = MacrosConfig.for({}, resolve(__dirname, '..', '..'));
         applyMode(macrosConfig);
         macrosConfig.setGlobalConfig(__filename, '@embroider/macros', { isTesting: true });
@@ -101,7 +98,7 @@ describe(`setTesting macro`, function () {
             setTesting(true);
           }
         `);
-        expect(code).not.toMatch(/setTesting/);
+        expect(code).toMatch(/from ['"].*runtime['"]/);
       });
     }),
   });
