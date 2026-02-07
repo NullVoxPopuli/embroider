@@ -109,41 +109,9 @@ export default function main(context: typeof Babel): unknown {
 
         if (callee.referencesImport('@embroider/macros', 'setTesting')) {
           state.calledIdentifiers.add(callee.node);
-
-          if (state.opts.mode === 'run-time') {
-            callee.replaceWith(state.importUtil.import(callee, state.pathToOurAddon('runtime'), 'setTesting'));
-          } else {
-            let args = path.get('arguments');
-            if (args.length === 0) {
-              throw error(path, `setTesting() requires a boolean argument`);
-            }
-
-            let arg = args[0];
-            let evaluator = new Evaluator({ state });
-            let result = evaluator.evaluate(arg);
-
-            if (!result.confident) {
-              throw error(
-                arg,
-                `setTesting() can only be called with a statically analyzable value in compile-time mode. The argument must be a literal boolean (true or false), not a variable or expression that can't be evaluated at build time.`
-              );
-            }
-
-            let macrosConfig = (state.opts.globalConfig['@embroider/macros'] as any) || {};
-            let currentIsTesting = Boolean(macrosConfig.isTesting);
-            let newIsTesting = Boolean(result.value);
-
-            if (currentIsTesting !== newIsTesting) {
-              throw error(
-                path,
-                `setTesting(${newIsTesting}) cannot change the testing state in compile-time mode. The current global config has isTesting=${currentIsTesting}. ` +
-                  `setTesting() calls are compiled away at build time, so they cannot change the testing state. ` +
-                  `If you need to change the testing state at runtime, use runtime mode instead.`
-              );
-            }
-
-            path.remove();
-          }
+          // setTesting() always needs a runtime implementation because its purpose
+          // is to change the testing state at runtime
+          callee.replaceWith(state.importUtil.import(callee, state.pathToOurAddon('runtime'), 'setTesting'));
           return;
         }
 
