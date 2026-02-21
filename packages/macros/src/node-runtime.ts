@@ -16,6 +16,11 @@ import { createRequire } from 'module';
 const nodeRequire = createRequire(__filename);
 
 export function dependencySatisfies(packageName: string, semverRange: string): boolean {
+  // NOTE: Unlike the babel implementation, which knows the exact source file location and
+  // can resolve relative to the owning package, this node runtime can only resolve from
+  // the current working directory. This means it may find a different version of a package
+  // than what the actual caller's package has as a dependency, if the project has multiple
+  // nested copies of the same package.
   try {
     let packageJsonPath = resolve.sync(join(packageName, 'package.json'), { basedir: process.cwd() });
     let pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8')) as { version: string };
@@ -28,6 +33,8 @@ export function dependencySatisfies(packageName: string, semverRange: string): b
   }
 }
 
+// NOTE: Unlike the babel implementation which knows the app root, this node runtime resolves
+// ember-source from the current working directory (CWD), which may not be the app root.
 export function appEmberSatisfies(semverRange: string): boolean {
   return dependencySatisfies('ember-source', semverRange);
 }
@@ -43,6 +50,9 @@ export function each<T>(array: T[]): T[] {
   return array;
 }
 
+// NOTE: This uses createRequire which will only work in versions of Node.js that support
+// require() of ES modules (Node 22+ with --experimental-require-module, or Node 23.3+ where
+// it is unflagged). In older Node.js versions, requiring an ESM module will throw an error.
 export function importSync(specifier: string): unknown {
   return nodeRequire(specifier);
 }
