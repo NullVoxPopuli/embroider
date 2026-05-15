@@ -1,5 +1,3 @@
-import type { Configuration } from 'webpack';
-
 // [babel-loader](https://webpack.js.org/loaders/babel-loader/#options) specific options.
 // This does not include the babel configuration, which is pulled from the app, only the
 // additional options that `babel-loader` supports.
@@ -11,10 +9,10 @@ export interface BabelLoaderOptions {
 }
 
 export interface Options {
-  // This allows you to extend the webpack config in arbitrary ways. Your
-  // changes will get applied on top of the defaults provided by
-  // @embroider/webpack.
-  webpackConfig?: Configuration;
+  // Because `emberWebpack()` is a plugin you add to your own
+  // webpack.config.js, you extend the webpack config simply by editing that
+  // file directly (add rules/plugins/resolve there as usual). The options
+  // here are the embroider-specific knobs.
 
   // the base public URL for your assets in production. Use this when you want
   // to serve all your assets from a different origin (like a CDN) than your

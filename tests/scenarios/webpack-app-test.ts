@@ -34,7 +34,12 @@ appScenarios
       'webpack.config.js': `
         'use strict';
         const { emberWebpack } = require('@embroider/webpack');
-        module.exports = emberWebpack();
+
+        // emberWebpack() is a normal webpack plugin that mutates the config,
+        // just like the embroider vite plugins mutate vite's config.
+        module.exports = {
+          plugins: [emberWebpack()],
+        };
       `,
     });
 
