@@ -1,5 +1,5 @@
 import type { PreparedApp } from 'scenario-tester';
-import { appScenarios } from './scenarios';
+import { wideAppScenarios } from './scenarios';
 import QUnit from 'qunit';
 import { readdirSync, readFileSync, existsSync } from 'fs-extra';
 import { join } from 'path';
@@ -11,7 +11,10 @@ const { module: Qmodule, test } = QUnit;
 // working directory, and webpack does the bundling using @embroider/core's
 // Resolver + virtual content. This scenario swaps the default vite wiring of
 // the app-template for the webpack wiring and exercises a real build.
-appScenarios
+// Expanded across the same Ember matrix as `vite-app-basics`
+// (wideAppScenarios / fullSupportMatrix), producing
+// `<emberVersion>-webpack-app-basics`.
+wideAppScenarios
   .map('webpack-app-basics', project => {
     project.linkDevDependency('@embroider/webpack', { baseDir: __dirname });
     project.linkDevDependency('webpack', { baseDir: __dirname });
