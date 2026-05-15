@@ -38,6 +38,9 @@ export interface HtmlState {
   appRoot: string;
   publicAssetURL: string;
   records: HtmlRecord[];
+  // set by classicEmberSupport(); when false (fully-v2 app using only ember())
+  // there is no compat prebuild and nothing to substitute.
+  applyContentFor: boolean;
 }
 
 function isAbsoluteURL(url: string) {
@@ -102,7 +105,9 @@ export function discoverHtmlEntrypoints(state: HtmlState, includeTests: boolean)
     }
     let htmlBase = htmlPath.replace(/[^a-zA-Z0-9]+/g, '_');
     let source = readFileSync(fullPath, 'utf8');
-    source = applyContentFor(source, htmlPath, appRoot);
+    if (state.applyContentFor) {
+      source = applyContentFor(source, htmlPath, appRoot);
+    }
     let dom = new JSDOM(source);
     let doc = dom.window.document;
     let record: HtmlRecord = { htmlPath, dom, handled: [], generatedFiles: [] };

@@ -1,5 +1,5 @@
 import fs from 'fs-extra';
-const { readJSONSync } = fs;
+const { readJSONSync, existsSync } = fs;
 import { join } from 'path';
 import { locateEmbroiderWorkingDir } from '@embroider/core';
 
@@ -9,9 +9,13 @@ import { locateEmbroiderWorkingDir } from '@embroider/core';
 // to the html that ember-cli would have injected there classically.
 export function applyContentFor(html: string, htmlPath: string, appRoot: string): string {
   let key = htmlPath.startsWith('/') ? htmlPath : '/' + htmlPath;
-  let config: Record<string, Record<string, string>> = readJSONSync(
-    join(locateEmbroiderWorkingDir(appRoot), 'content-for.json')
-  );
+  let configPath = join(locateEmbroiderWorkingDir(appRoot), 'content-for.json');
+  if (!existsSync(configPath)) {
+    // a fully-v2 app using only ember() (no classicEmberSupport) won't have
+    // run the compat prebuild, so there's nothing to substitute.
+    return html;
+  }
+  let config: Record<string, Record<string, string>> = readJSONSync(configPath);
   let contentsForConfig = config[key];
   if (!contentsForConfig) {
     return html;

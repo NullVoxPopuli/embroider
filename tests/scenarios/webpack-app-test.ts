@@ -33,12 +33,12 @@ appScenarios
       `,
       'webpack.config.js': `
         'use strict';
-        const { emberWebpack } = require('@embroider/webpack');
+        const { classicEmberSupport, ember } = require('@embroider/webpack');
 
-        // emberWebpack() is a normal webpack plugin that mutates the config,
-        // just like the embroider vite plugins mutate vite's config.
+        // mirrors the vite config: two plugins that mutate webpack's config,
+        // rather than one plugin owning the whole Configuration.
         module.exports = {
-          plugins: [emberWebpack()],
+          plugins: [classicEmberSupport(), ember()],
         };
       `,
     });

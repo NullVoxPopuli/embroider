@@ -36,7 +36,6 @@ export class AssetsPlugin {
                 }
                 const filePath = join(pkg.root, path);
                 if (!existsSync(filePath) || !lstatSync(filePath).isFile()) {
-                  // eslint-disable-next-line no-console
                   console.log(`Invalid public-assets entry: ${pkg.name} declared "${path}" which is not a file`);
                   continue;
                 }
