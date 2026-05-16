@@ -1,0 +1,35 @@
+# Unlabeled Changes
+
+* `@embroider/template-tag-codemod`
+  * [#2374](https://github.com/embroider-build/embroider/pull/2374) More idiomatic commander usage ([@tcjr](https://github.com/tcjr))
+* `@embroider/compat`
+  * [#2134](https://github.com/embroider-build/embroider/pull/2134) Template tag codemod namehint ([@void-mAlex](https://github.com/void-mAlex))
+  * [#1628](https://github.com/embroider-build/embroider/pull/1628) prepare a release ([@mansona](https://github.com/mansona))
+* `@embroider/compat`, `@embroider/core`, `@embroider/shared-internals`
+  * [#2089](https://github.com/embroider-build/embroider/pull/2089) add required fixes to keep-app-dir PR ([@mansona](https://github.com/mansona))
+* `@embroider/core`
+  * [#2079](https://github.com/embroider-build/embroider/pull/2079) add test fixes for no-test-entrypoint branch ([@mansona](https://github.com/mansona))
+  * [#1671](https://github.com/embroider-build/embroider/pull/1671) Prepare a release ([@mansona](https://github.com/mansona))
+* `@embroider/compat`, `@embroider/core`
+  * [#2063](https://github.com/embroider-build/embroider/pull/2063) add some fixes to the keep-app-dir implementation ([@mansona](https://github.com/mansona))
+* `@embroider/shared-internals`
+  * [#2051](https://github.com/embroider-build/embroider/pull/2051) fix template only components in esbuild on windows ([@mansona](https://github.com/mansona))
+  * [#2048](https://github.com/embroider-build/embroider/pull/2048) Fix windows tests ([@mansona](https://github.com/mansona))
+* Other
+  * [#2045](https://github.com/embroider-build/embroider/pull/2045) add missing resolve extension config to other vite.config files ([@mansona](https://github.com/mansona))
+  * Caching issues (leading to Webpack crashing or component templates not being picked up) ([@chancancode](https://github.com/chancancode))
+* `@embroider/shared-internals`, `@embroider/vite`
+  * [#2044](https://github.com/embroider-build/embroider/pull/2044) fix template-only-components in virtual entrypoint ([@mansona](https://github.com/mansona))
+* `@embroider/macros`
+  * [#1979](https://github.com/embroider-build/embroider/pull/1979) fix scope visitors ([@ef4](https://github.com/ef4))
+* `@embroider/addon-dev`, `@embroider/babel-loader-9`, `@embroider/compat`, `@embroider/core`, `@embroider/macros`, `@embroider/router`, `@embroider/shared-internals`, `@embroider/vite`
+  * [#1616](https://github.com/embroider-build/embroider/pull/1616) prepare release ([@mansona](https://github.com/mansona))
+* `@embroider/addon-dev`, `@embroider/vite`
+  * [#1568](https://github.com/embroider-build/embroider/pull/1568) plan release ([@mansona](https://github.com/mansona))
+* `@embroider/addon-dev`, `@embroider/compat`, `@embroider/core`, `@embroider/macros`, `@embroider/shared-internals`, `@embroider/vite`
+  * [#1566](https://github.com/embroider-build/embroider/pull/1566) preparing a release ([@mansona](https://github.com/mansona))
+* `@embroider/addon-dev`, `@embroider/addon-shim`, `@embroider/compat`, `@embroider/core`, `@embroider/hbs-loader`, `@embroider/macros`, `@embroider/router`, `@embroider/shared-internals`
+  * [#1529](https://github.com/embroider-build/embroider/pull/1529) Preparing release ([@ef4](https://github.com/ef4))
+
+
+*Cannot plan release until the above changes are labeled*.
