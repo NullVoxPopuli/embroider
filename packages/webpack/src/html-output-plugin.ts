@@ -19,7 +19,14 @@ const RAW_VIRTUAL = new Set([
 ]);
 
 type Handled =
-  | { kind: 'js-module'; entryName: string; el: HTMLElement }
+  // the first module-script of an html page: gets the page's single webpack
+  // entry (all the page's module scripts as ordered imports). One entry per
+  // page == one runtime per page, so singletons are instantiated once, the
+  // same way rollup/vite treat an html document.
+  | { kind: 'js-entry'; entryName: string; el: HTMLElement }
+  // any further module-scripts on the same page: their code is already part
+  // of the page entry (in order), so the tag is just removed.
+  | { kind: 'js-consumed'; el: HTMLElement }
   // a non-module, non-resolver-virtual reference (e.g. /@embroider/virtual/app.css).
   // The underlying file is emitted by AssetsPlugin (from a v2 addon's
   // public-assets), exactly like vite's `assets` plugin does. We just rewrite
@@ -112,6 +119,8 @@ export function discoverHtmlEntrypoints(state: HtmlState, includeTests: boolean)
     let doc = dom.window.document;
     let record: HtmlRecord = { htmlPath, dom, handled: [], generatedFiles: [] };
     let idx = 0;
+    let moduleScripts: HTMLElement[] = [];
+    let moduleImports: string[] = [];
 
     // stylesheets
     for (let link of [...doc.querySelectorAll('link[rel*="stylesheet"]')] as HTMLLinkElement[]) {
@@ -139,27 +148,35 @@ export function discoverHtmlEntrypoints(state: HtmlState, includeTests: boolean)
       }
       let isModule = script.getAttribute('type') === 'module';
       if (isModule) {
-        let entryName = `${htmlBase}__${idx++}`;
         let importPath: string;
         if (src) {
           importPath = src.startsWith('/') ? join(appRoot, src.slice(1)) : join(dirname(fullPath), src);
         } else {
-          // externalize the inline module so webpack can treat it as an entry.
-          // It is written as a sibling of the html file so its relative
-          // imports resolve exactly as they did inline.
-          let genFile = join(dirname(fullPath), `.embroider-webpack-${entryName}.js`);
+          // externalize the inline module so webpack can treat it as an entry
+          // import. It is written as a sibling of the html file so its
+          // relative imports resolve exactly as they did inline.
+          let genFile = join(dirname(fullPath), `.embroider-webpack-${htmlBase}__${idx++}.js`);
           outputFileSync(genFile, transformImportMetaGlob(script.textContent ?? ''));
           record.generatedFiles.push(genFile);
           importPath = genFile;
         }
-        entry[entryName] = { import: [importPath] };
-        record.handled.push({ kind: 'js-module', entryName, el: script });
+        moduleScripts.push(script);
+        moduleImports.push(importPath);
       } else if (src) {
         let request = src.replace(/^\//, '');
         if (RAW_VIRTUAL.has(request)) {
           record.handled.push({ kind: 'raw-virtual', specifier: request, el: script, isStyle: false });
         }
         // non-virtual, non-module scripts with a src are left untouched
+      }
+    }
+
+    if (moduleScripts.length > 0) {
+      let entryName = htmlBase;
+      entry[entryName] = { import: moduleImports };
+      record.handled.push({ kind: 'js-entry', entryName, el: moduleScripts[0] });
+      for (let el of moduleScripts.slice(1)) {
+        record.handled.push({ kind: 'js-consumed', el });
       }
     }
 
@@ -231,6 +248,11 @@ export class HtmlOutputPlugin {
               if (h.kind === 'asset') {
                 // emitted by AssetsPlugin from a v2 addon's public-assets
                 replaceTag(record.dom, h.el, [base + h.request]);
+                continue;
+              }
+              if (h.kind === 'js-consumed') {
+                // its code is already part of the page's single entry
+                replaceTag(record.dom, h.el, []);
                 continue;
               }
               let ep = compilation.entrypoints.get(h.entryName);

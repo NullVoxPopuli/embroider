@@ -5,7 +5,7 @@ import type { Resolver as EmbroiderResolver, ResolverOptions } from '@embroider/
 import type { Compiler, Module, ResolveData } from 'webpack';
 import assertNever from 'assert-never';
 import escapeRegExp from 'escape-string-regexp';
-import { serializeVirtualResponse, deserializeVirtualResponse } from './virtual-loader';
+import { registerVirtualResponse } from './virtual-loader';
 
 export type { ResolverOptions as Options };
 
@@ -147,9 +147,10 @@ class WebpackRequestAdapter implements RequestAdapter<WebpackResolution> {
       for (let dep of state.dependencies) {
         let match = virtualRequestPattern.exec((dep as any)._parentModule?.userRequest);
         if (match) {
-          let encodedVirtual = new URLSearchParams(match.groups!.query).get('v');
-          if (encodedVirtual) {
-            fromFile = deserializeVirtualResponse(encodedVirtual).specifier;
+          // URLSearchParams already decodes the value
+          let id = new URLSearchParams(match.groups!.query).get('id');
+          if (id) {
+            fromFile = id;
             break;
           }
         }
@@ -208,8 +209,12 @@ class WebpackRequestAdapter implements RequestAdapter<WebpackResolution> {
   ): ExtendedResolveData {
     let specifier = request.specifier;
     if (virtual) {
+      // Hand the VirtualResponse across in-process and key the request only by
+      // the stable specifier, so the same logical virtual always produces the
+      // same webpack module (this is what rollup/vite get for free).
+      registerVirtualResponse(this.appRoot, virtual);
       let params = new URLSearchParams();
-      params.set('v', serializeVirtualResponse(virtual));
+      params.set('id', virtual.specifier);
       params.set('a', this.appRoot);
       specifier = `${this.babelLoaderPrefix}${virtualLoaderName}?${params.toString()}!`;
     }
