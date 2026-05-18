@@ -14,7 +14,6 @@
   },
   "exports": {
     "./tests/*": "./tests/*",
-    "./config/environment": "./src/config/environment.js",
     "./*": "./src/*"
   },
   "scripts": {

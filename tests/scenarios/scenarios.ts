@@ -108,6 +108,15 @@ export function patchTestWaiters(externalProject: Project) {
 function updateEmberQunit(project: Project) {
   project.linkDevDependency('ember-qunit', { baseDir: __dirname, resolveName: 'ember-qunit-9' });
 
+  // The rewritten test-helper below uses the classic
+  // `<modulePrefix>/config/environment` convention. A fully-v2 app
+  // (`ember-addon.version === 2`) defines its config in `#config`/src and
+  // ships its own correct test-helper (which calls `enterTestMode()`), so
+  // clobbering it here is wrong for that case — leave it alone.
+  if ((project.pkg as { 'ember-addon'?: { version?: number } })['ember-addon']?.version === 2) {
+    return;
+  }
+
   let testHelperFile = (project.files['tests'] as any)['test-helper.js'] ? 'test-helper.js' : 'test-helper.ts';
 
   (project.files['tests'] as any)[testHelperFile] = `
