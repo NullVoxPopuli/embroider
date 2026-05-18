@@ -292,6 +292,12 @@ export function baseWebpackApp() {
   return Project.fromDir(dirname(require.resolve('../app-template-webpack/package.json')), { linkDevDeps: true });
 }
 
+export function baseWebpackMinimalApp() {
+  return Project.fromDir(dirname(require.resolve('../app-template-webpack-minimal/package.json')), {
+    linkDevDeps: true,
+  });
+}
+
 export const appScenarios = supportMatrix(Scenarios.fromProject(baseApp));
 
 export const wideAppScenarios = fullSupportMatrix(Scenarios.fromProject(baseApp));
@@ -304,6 +310,8 @@ export const webpackAppScenarios = fullSupportMatrix(Scenarios.fromProject(baseW
 export const tsAppScenarios = supportMatrix(Scenarios.fromProject(baseTSApp)).skip('lts_3_28').skip('lts_4_4');
 
 export const minimalAppScenarios = supportMatrix(Scenarios.fromProject(baseMinimalApp));
+
+export const webpackMinimalAppScenarios = supportMatrix(Scenarios.fromProject(baseWebpackMinimalApp));
 
 export const tsAppClassicScenarios = supportMatrix(Scenarios.fromProject(baseTSAppClassic))
   .skip('lts_3_28')
