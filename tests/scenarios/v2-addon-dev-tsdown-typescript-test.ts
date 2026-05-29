@@ -59,33 +59,31 @@ appScenarios
       'tsdown.config.js': `
         import { babel } from '@rollup/plugin-babel';
         import { defineConfig } from 'tsdown';
-        import { Addon } from '@embroider/addon-dev/rollup';
-        import { tsdown } from '@embroider/addon-dev/tsdown';
+        import { Addon } from '@embroider/addon-dev/tsdown';
 
         const addon = new Addon({
           srcDir: 'src',
           destDir: 'dist',
         });
 
-        export default defineConfig(
-          tsdown(addon, {
-            publicEntrypoints: [
-              'components/**/*.js',
-              'utils/**/*.js',
-            ],
-            appReexports: ['components/**/*.js'],
+        export default defineConfig({
+          // tsdown emits the declarations (via dts) - no glint/ember-tsc step.
+          ...addon.output({ declarations: true }),
 
-            // tsdown emits the declarations - no glint/ember-tsc step.
-            declarations: true,
+          entry: addon.publicEntrypoints(['components/**/*.js', 'utils/**/*.js']),
 
-            plugins: [
-              babel({
-                babelHelpers: 'inline',
-                extensions: ['.js', '.ts', '.gjs', '.gts', '.hbs'],
-              }),
-            ],
-          })
-        );
+          plugins: [
+            addon.appReexports(['components/**/*.js']),
+            addon.dependencies(),
+            addon.hbs(),
+            addon.gjs(),
+            addon.clean(),
+            babel({
+              babelHelpers: 'inline',
+              extensions: ['.js', '.ts', '.gjs', '.gts', '.hbs'],
+            }),
+          ],
+        });
       `,
       src: {
         components: {

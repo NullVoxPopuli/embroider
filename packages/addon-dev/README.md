@@ -44,7 +44,7 @@ lets you say `import imageURL from './my-image.png'`. Not that this pattern is *
 
 ## tsdown Utilities
 
-`@embroider/addon-dev/tsdown` exports a `tsdown()` config builder for building addons with [tsdown](https://tsdown.dev) (the [rolldown](https://rolldown.rs)-powered library bundler). It produces the same v2-addon output as the rollup pipeline (unbundled modules, `_app_` reexports, kept assets) and, instead of running a separate glint/ember-tsc step, emits your `.d.ts` declarations via tsdown's built-in `dts`.
+`@embroider/addon-dev/tsdown` exports an `Addon` class for building addons with [tsdown](https://tsdown.dev) (the [rolldown](https://rolldown.rs)-powered library bundler). It mirrors `@embroider/addon-dev/rollup`'s `Addon` — the same plugins, used in a normal tsdown [`defineConfig`](https://tsdown.dev/guide/getting-started) — but produces declarations via tsdown's built-in `dts` (oxc isolated declarations) instead of a separate glint/ember-tsc step.
 
 To use it:
 
@@ -59,17 +59,33 @@ To use it:
 2. Copy the `./sample-tsdown.config.js` in this repo to your own `tsdown.config.js`.
 3. Copy the `./sample-babel.config.json` in this repo to your own `babel.config.json`.
 
-`tsdown(addon, options)` accepts:
+```js
+import { babel } from '@rollup/plugin-babel';
+import { defineConfig } from 'tsdown';
+import { Addon } from '@embroider/addon-dev/tsdown';
 
-- `publicEntrypoints: string[]` — the modules users can import from your addon (same patterns as `addon.publicEntrypoints`).
-- `appReexports?` — modules to reexport into the "app" tree (same value as `addon.appReexports`; either a `string[]` or `{ include, mapFilename, exports, exclude }`).
-- `hbs?` — options forwarded to `addon.hbs` (e.g. `{ excludeColocation: [...] }`).
-- `keepAssets?: { include, exports? }[]` — asset globs to preserve, each entry forwarded to `addon.keepAssets`.
-- `loader?: Record<string, string>` — module-type overrides forwarded to tsdown, for custom asset extensions handled by your own plugins (e.g. `{ '.xyz': 'js' }`).
-- `publicAssets?: [path, opts?][]` — asset folders, each tuple forwarded to `addon.publicAssets`.
-- `entryExclude?: string[]` — globs to exclude from the public entrypoints.
-- `declarations?: boolean` — emit `.d.ts` via tsdown (default `true`).
-- `plugins?: unknown[]` — extra plugins, e.g. `@rollup/plugin-babel`.
+const addon = new Addon({ srcDir: 'src', destDir: 'dist' });
+
+export default defineConfig({
+  ...addon.output(),
+  entry: addon.publicEntrypoints(['components/**/*.js', 'index.js']),
+  plugins: [
+    addon.appReexports(['components/welcome-page.js']),
+    addon.dependencies(),
+    addon.hbs(),
+    addon.gjs(),
+    addon.keepAssets(['**/*.css']),
+    addon.clean(),
+    babel({ babelHelpers: 'bundled', extensions: ['.js', '.ts', '.gjs', '.gts', '.hbs'] }),
+  ],
+});
+```
+
+The `Addon` exposes:
+
+- `output(options?)` — the config-level tsdown options to spread into `defineConfig` (ES output, declarations, and the loader/hook tweaks for v2-addon asset handling). Options: `declarations?: boolean` (emit `.d.ts`, default `true`) and `loader?: Record<string, string>` (module-type overrides for custom asset extensions handled by your own plugins, e.g. `{ '.xyz': 'js' }`).
+- `publicEntrypoints(patterns, { exclude? })` — returns the tsdown `entry` map for the given globs.
+- `appReexports`, `dependencies`, `hbs`, `gjs`, `keepAssets`, `publicAssets`, `clean` — the same plugins as the rollup `Addon`, working under rolldown.
 
 ### Watch mode
 

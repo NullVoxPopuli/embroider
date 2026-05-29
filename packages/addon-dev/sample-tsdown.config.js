@@ -1,43 +1,48 @@
 import { babel } from '@rollup/plugin-babel';
 import { defineConfig } from 'tsdown';
-import { Addon } from '@embroider/addon-dev/rollup';
-import { tsdown } from '@embroider/addon-dev/tsdown';
+import { Addon } from '@embroider/addon-dev/tsdown';
 
 const addon = new Addon({
   srcDir: 'src',
   destDir: 'dist',
 });
 
-export default defineConfig(
-  tsdown(addon, {
-    // These are the modules that users should be able to import from your
-    // addon. Anything not listed here may get optimized away.
-    publicEntrypoints: ['components/**/*.js', 'index.js'],
+export default defineConfig({
+  // Config-level options: ES output in `destDir`, declarations via tsdown's
+  // `dts` (oxc isolated declarations, replacing the glint/ember-tsc step), and
+  // the loader/hook tweaks needed for v2-addon asset handling.
+  ...addon.output(),
 
+  // The modules users should be able to import from your addon. Anything not
+  // listed here may get optimized away.
+  entry: addon.publicEntrypoints(['components/**/*.js', 'index.js']),
+
+  plugins: [
     // These are the modules that should get reexported into the traditional
-    // "app" tree. Things in here should also be in publicEntrypoints above, but
-    // not everything in publicEntrypoints necessarily needs to go here.
-    appReexports: ['components/welcome-page.js'],
+    // "app" tree. Things in here should also be in publicEntrypoints above.
+    addon.appReexports(['components/welcome-page.js']),
 
-    // addons are allowed to contain imports of .css files, which we want to
-    // leave alone and keep in the published output.
-    keepAssets: [{ include: ['**/*.css'] }],
+    // Follow the v2 addon rules about dependencies.
+    addon.dependencies(),
 
-    // tsdown emits your `.d.ts` declarations (via oxc isolated declarations),
-    // replacing the separate glint/ember-tsc step. Set to `false` to opt out.
-    declarations: true,
+    // Integrate standalone .hbs files as Javascript.
+    addon.hbs(),
 
-    plugins: [
-      // This babel config should *not* apply presets or compile away ES
-      // modules. It exists only to provide development niceties for you, like
-      // automatic template colocation and template compilation.
-      //
-      // By default, this will load the actual babel config from the file
-      // babel.config.json.
-      babel({
-        babelHelpers: 'bundled',
-        extensions: ['.js', '.ts', '.gjs', '.gts', '.hbs'],
-      }),
-    ],
-  })
-);
+    // Compile .gjs/.gts (and emit their declarations).
+    addon.gjs(),
+
+    // Keep .css imports as real files in the published output.
+    addon.keepAssets(['**/*.css']),
+
+    // Remove leftover build artifacts when starting a new build.
+    addon.clean(),
+
+    // This babel config should *not* apply presets or compile away ES modules.
+    // It exists only for development niceties like template colocation. By
+    // default it loads babel.config.json.
+    babel({
+      babelHelpers: 'bundled',
+      extensions: ['.js', '.ts', '.gjs', '.gts', '.hbs'],
+    }),
+  ],
+});

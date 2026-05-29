@@ -5,8 +5,7 @@ import { Project } from 'scenario-tester';
 import { readFile } from 'fs-extra';
 import { join } from 'path';
 
-import { Addon } from '../src/rollup';
-import { tsdown } from '../src/tsdown';
+import { Addon } from '../src/tsdown';
 import { fixDeclarations } from '../src/fix-declarations';
 
 async function generateProject(src: {}): Promise<Project> {
@@ -36,10 +35,9 @@ async function runTsdown(dir: string) {
       // don't try to auto-load a tsdown.config from disk
       config: false,
       logLevel: 'silent',
-      ...tsdown(addon, {
-        publicEntrypoints: ['**/*.js'],
-        declarations: true,
-      }),
+      ...addon.output({ declarations: true }),
+      entry: addon.publicEntrypoints(['**/*.js']),
+      plugins: [addon.gjs()],
     });
   } finally {
     process.chdir(currentDir);

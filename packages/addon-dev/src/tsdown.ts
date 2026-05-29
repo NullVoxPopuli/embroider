@@ -1,76 +1,20 @@
 import path from 'path';
 import type { UserConfig } from 'tsdown';
 import type { Plugin } from 'rolldown';
-import type { Addon } from './rollup';
+import { Addon as RollupAddon } from './rollup';
 import { discoverEntrypoints } from './entrypoints';
 import { emberGtsResolve, fixDtsExtensions } from './tsdown-gts-resolve';
 
-type AppReexports =
-  | string[]
-  | {
-      include: string[];
-      mapFilename?: (fileName: string) => string;
-      exports?: (filename: string) => string[] | string | undefined;
-      exclude?: string[];
-    };
+// rolldown assigns `.css` (and friends) the `css` module type and refuses to
+// bundle them. v2 addons preserve CSS as-is (via `keepAssets`), so we treat
+// those extensions as `js` and let keepAssets' load/transform capture the
+// source and replace it with a marker before it is parsed.
+const CSS_LIKE = ['.css', '.less', '.sass', '.scss', '.styl', '.stylus'];
 
-export interface TsdownOptions {
-  // Globs describing the modules users should be able to import from your addon
-  // (the same patterns you would pass to `addon.publicEntrypoints`).
-  publicEntrypoints: string[];
-
-  // Globs that should be excluded from the public entrypoints.
-  entryExclude?: string[];
-
-  // Modules that should be reexported into the traditional "app" tree (the same
-  // value you would pass to `addon.appReexports`).
-  appReexports?: AppReexports;
-
-  // Options forwarded to `addon.hbs` (e.g. `{ excludeColocation: [...] }`).
-  hbs?: Parameters<Addon['hbs']>[0];
-
-  // CSS/asset globs to preserve. Each entry is forwarded to `addon.keepAssets`.
-  keepAssets?: { include: string[]; exports?: 'default' | '*' }[];
-
-  // Public asset folders, as `[path, opts?]` tuples forwarded to
-  // `addon.publicAssets`.
-  publicAssets?: [path: string, opts?: Parameters<Addon['publicAssets']>[1]][];
-
-  // Whether to emit `.d.ts` declarations via tsdown. Defaults to `true`.
-  declarations?: boolean;
-
-  // Module-type (loader) overrides forwarded to tsdown, for custom asset
-  // extensions handled by your own plugins (e.g. `{ '.xyz': 'js' }`).
-  loader?: Record<string, string>;
-
-  // Extra plugins (e.g. `@rollup/plugin-babel`) to run during the build.
-  plugins?: unknown[];
-}
-
-// Pulls extensions out of globs like `**/*.css` and `**/*.{png,jpg}`.
-function extensionsFromGlobs(globs: string[]): string[] {
-  const exts = new Set<string>();
-  for (const glob of globs) {
-    const braces = glob.match(/\.\{([^}]+)\}$/);
-    if (braces) {
-      for (const ext of braces[1].split(',')) {
-        exts.add('.' + ext.trim());
-      }
-      continue;
-    }
-    const single = glob.match(/\.([A-Za-z0-9]+)$/);
-    if (single) {
-      exts.add('.' + single[1]);
-    }
-  }
-  return [...exts];
-}
-
-// The rollup `keepAssets` plugin's `load`/`transform` are written as plain
-// hook functions, relying on rollup's fall-through ordering. Under rolldown,
-// tsdown registers internal plugins whose normal-order `load` would otherwise
-// read the asset (as UTF-8) before keepAssets can claim it, so we re-register
-// keepAssets' hooks at `order: 'pre'`.
+// The rollup `keepAssets` plugin's `load`/`transform` rely on rollup's
+// fall-through hook ordering. Under rolldown, tsdown registers internal plugins
+// whose normal-order `load` would otherwise read the asset (as UTF-8) before
+// keepAssets can claim it, so we re-register keepAssets' hooks at `order: 'pre'`.
 function asPreLoad(plugin: unknown): unknown {
   const wrapped: Record<string, unknown> = { ...(plugin as object) };
   for (const hook of ['load', 'transform'] as const) {
@@ -82,112 +26,138 @@ function asPreLoad(plugin: unknown): unknown {
   return wrapped;
 }
 
-// Builds a tsdown config (compatible with tsdown's `defineConfig`) that produces
-// the same v2-addon output as the rollup `Addon` pipeline: multi-entry
-// code-splitting, app-tree reexports, and (via tsdown's `dts`)
-// declarations - replacing the separate glint/ember-tsc subprocess.
-export function tsdown(addon: Addon, options: TsdownOptions): UserConfig {
-  const srcDir = addon.srcDir;
-  const destDir = addon.destDir;
+export interface OutputOptions {
+  // Whether to emit `.d.ts` declarations via tsdown. Defaults to `true`.
+  declarations?: boolean;
+  // Additional module-type (loader) overrides, for custom asset extensions
+  // handled by your own plugins (e.g. `{ '.xyz': 'js' }`).
+  loader?: Record<string, string>;
+}
 
-  const entry: Record<string, string> = {};
-  for (const { idName, fileName } of discoverEntrypoints({
-    srcDir,
-    include: options.publicEntrypoints,
-    exclude: options.entryExclude,
-  })) {
-    const name = fileName.replace(/\.js$/, '');
-    entry[name] = path.resolve(srcDir, idName);
+// The tsdown counterpart of `@embroider/addon-dev/rollup`'s `Addon`. It exposes
+// the same plugins (which work under rolldown) plus tsdown-specific helpers:
+// `output()` for the config-level options and `publicEntrypoints()` for the
+// `entry` map. Declarations are emitted by tsdown's `dts` (oxc isolated
+// declarations) instead of a separate glint/ember-tsc step.
+export class Addon {
+  #rollup: RollupAddon;
+  #srcDir: string;
+  #destDir: string;
+
+  constructor(params: { srcDir?: string; destDir?: string } = {}) {
+    this.#rollup = new RollupAddon(params);
+    this.#srcDir = this.#rollup.srcDir;
+    this.#destDir = this.#rollup.destDir;
   }
 
-  const hasKeepAssets = (options.keepAssets ?? []).length > 0;
-
-  // rolldown assigns `.css` (and friends) the `css` module type and refuses to
-  // bundle them. Kept CSS is preserved as-is by `keepAssets`, so treat those
-  // extensions as `js` - `keepAssets`'s load/transform then capture the source
-  // and replace it with a marker before it is parsed.
-  const CSS_LIKE = ['.css', '.less', '.sass', '.scss', '.styl', '.stylus'];
-  const loader: Record<string, string> = {};
-  for (const ext of extensionsFromGlobs(
-    (options.keepAssets ?? []).flatMap((k) => k.include)
-  )) {
-    if (CSS_LIKE.includes(ext)) {
+  // The config-level tsdown options. Spread this into your `defineConfig`:
+  //
+  //   export default defineConfig({
+  //     ...addon.output(),
+  //     entry: addon.publicEntrypoints(['components/**/*.js']),
+  //     plugins: [ ... ],
+  //   });
+  output(options: OutputOptions = {}): UserConfig {
+    const loader: Record<string, string> = {};
+    for (const ext of CSS_LIKE) {
       loader[ext] = 'js';
     }
+    Object.assign(loader, options.loader);
+
+    return {
+      // Multi-entry code-splitting (NOT `unbundle`/`preserveModules`), matching
+      // rollup: each public entrypoint is its own chunk and single-use private
+      // modules (compiled colocated templates, babel helpers) inline into their
+      // consumer. `preserveEntrySignatures: 'allow-extension'` keeps each
+      // entrypoint importable while letting one entrypoint import another
+      // directly, without rolldown's default facade + hashed shared chunk.
+      inputOptions: {
+        preserveEntrySignatures: 'allow-extension',
+      },
+      format: 'es',
+      sourcemap: true,
+      outDir: this.#destDir,
+      // `clean()` owns incremental dist diffing; don't let tsdown wipe outDir.
+      clean: false,
+      // `oxc: true` forces oxc-powered isolated declarations, which operate on
+      // the (content-tag compiled) source the gjs plugin's `load` hook returns
+      // rather than reading `.gts`/`.gjs` from disk via the TypeScript compiler.
+      dts: options.declarations === false ? false : { oxc: true },
+      outExtensions: () => ({ js: '.js', dts: '.d.ts' }),
+      loader: loader as UserConfig['loader'],
+      // The addon owns asset handling (incl. CSS), so remove tsdown's built-in
+      // CSS guard, which would otherwise throw on any `.css` module before
+      // keepAssets can preserve it.
+      hooks: {
+        'build:before'(ctx: { buildOptions: { plugins?: unknown } }) {
+          const opts = ctx.buildOptions;
+          if (Array.isArray(opts.plugins)) {
+            opts.plugins = opts.plugins.filter(
+              (p) =>
+                !(
+                  p &&
+                  typeof p === 'object' &&
+                  (p as { name?: string }).name === 'tsdown:css-guard'
+                )
+            );
+          }
+        },
+      },
+    } as UserConfig;
   }
-  Object.assign(loader, options.loader);
 
-  const appReexports = options.appReexports;
-  const reexportPlugin = appReexports
-    ? Array.isArray(appReexports)
-      ? addon.appReexports(appReexports)
-      : addon.appReexports(appReexports.include, appReexports)
-    : undefined;
+  // Returns the tsdown `entry` map for the given public-entrypoint globs (the
+  // same patterns you would pass to the rollup `addon.publicEntrypoints`).
+  publicEntrypoints(
+    patterns: string[],
+    opts: { exclude?: string[] } = {}
+  ): Record<string, string> {
+    const entry: Record<string, string> = {};
+    for (const { idName, fileName } of discoverEntrypoints({
+      srcDir: this.#srcDir,
+      include: patterns,
+      exclude: opts.exclude,
+    })) {
+      entry[fileName.replace(/\.js$/, '')] = path.resolve(this.#srcDir, idName);
+    }
+    return entry;
+  }
 
-  const plugins: unknown[] = [
-    emberGtsResolve(),
-    reexportPlugin,
-    ...(options.plugins ?? []),
-    addon.dependencies(),
-    addon.hbs(options.hbs),
-    ...(options.keepAssets ?? []).map(({ include, exports }) =>
-      asPreLoad(addon.keepAssets(include, exports))
-    ),
-    ...(options.publicAssets ?? []).map(([assetPath, opts]) =>
-      addon.publicAssets(assetPath, opts)
-    ),
-    addon.clean(),
-    fixDtsExtensions(destDir),
-  ].filter(Boolean);
+  // Reexports into the traditional "app" tree (reused rollup plugin).
+  appReexports(...args: Parameters<RollupAddon['appReexports']>): Plugin {
+    return this.#rollup.appReexports(...args) as unknown as Plugin;
+  }
 
-  return {
-    entry,
-    // Deliberately NOT `unbundle: true`. v2-addon output matches rollup's
-    // multi-entry code-splitting: each public entrypoint is its own chunk,
-    // single-use private modules (e.g. colocated compiled templates, babel
-    // helpers) inline into their consumer. `unbundle`/`preserveModules` would
-    // instead emit every module as its own file, diverging from rollup.
-    //
-    // `preserveEntrySignatures: 'allow-extension'` keeps each public entrypoint
-    // as its own chunk with its real code (importable by apps) while letting
-    // one entrypoint import another directly - without rolldown's default
-    // behaviour of extracting a shared hashed chunk + facade.
-    inputOptions: {
-      preserveEntrySignatures: 'allow-extension',
-    },
-    format: 'es',
-    sourcemap: true,
-    outDir: destDir,
-    // The reused `addon.clean()` plugin owns incremental dist diffing; let it
-    // manage deletions instead of tsdown wiping the whole outDir each run.
-    clean: false,
-    // `oxc: true` forces oxc-powered isolated declarations, which operate on the
-    // (content-tag compiled) source our `load` hook returns rather than reading
-    // `.gts`/`.gjs` from disk via the TypeScript compiler.
-    dts: options.declarations === false ? false : { oxc: true },
-    outExtensions: () => ({ js: '.js', dts: '.d.ts' }),
-    loader: loader as UserConfig['loader'],
-    plugins: plugins as Plugin[],
-    // When keepAssets is used, the addon owns asset handling (incl. CSS), so
-    // remove tsdown's built-in CSS guard, which would otherwise throw on any
-    // `.css` module before keepAssets can preserve it. We strip it from the
-    // resolved rolldown options just before the build runs.
-    hooks: hasKeepAssets
-      ? {
-          'build:before'(ctx: { buildOptions: { plugins?: unknown } }) {
-            const opts = ctx.buildOptions;
-            if (Array.isArray(opts.plugins)) {
-              opts.plugins = opts.plugins.filter(
-                (p) =>
-                  !(
-                    p &&
-                    typeof p === 'object' &&
-                    (p as { name?: string }).name === 'tsdown:css-guard'
-                  )
-              );
-            }
-          },
-        }
-      : undefined,
-  } as UserConfig;
+  // Standalone `.hbs` handling (reused rollup plugin).
+  hbs(options?: Parameters<RollupAddon['hbs']>[0]): Plugin {
+    return this.#rollup.hbs(options) as unknown as Plugin;
+  }
+
+  // Handles `.gjs`/`.gts`: compiles `<template>` (content-tag) and presents the
+  // files to rolldown as TS/JS so declarations can be emitted, plus strips
+  // `.gts` extensions from the emitted `.d.ts`.
+  gjs(): Plugin[] {
+    return [emberGtsResolve(), fixDtsExtensions(this.#destDir)];
+  }
+
+  // Preserve non-JS assets in the published output (reused rollup plugin, run
+  // at `order: 'pre'` so it claims assets before tsdown's internal loaders).
+  keepAssets(...args: Parameters<RollupAddon['keepAssets']>): Plugin {
+    return asPreLoad(this.#rollup.keepAssets(...args)) as Plugin;
+  }
+
+  // Follow the v2 addon dependency rules (reused rollup plugin).
+  dependencies(): Plugin {
+    return this.#rollup.dependencies() as unknown as Plugin;
+  }
+
+  // Incremental dist diffing / cleanup (reused rollup plugin).
+  clean(): Plugin {
+    return this.#rollup.clean() as unknown as Plugin;
+  }
+
+  // Expose a folder of public assets (reused rollup plugin).
+  publicAssets(...args: Parameters<RollupAddon['publicAssets']>): Plugin {
+    return this.#rollup.publicAssets(...args) as unknown as Plugin;
+  }
 }

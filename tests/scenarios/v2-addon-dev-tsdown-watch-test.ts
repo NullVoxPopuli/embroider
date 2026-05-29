@@ -53,24 +53,25 @@ Scenarios.fromProject(() => baseV2Addon())
       'tsdown.config.js': `
         import { babel } from '@rollup/plugin-babel';
         import { defineConfig } from 'tsdown';
-        import { Addon } from '@embroider/addon-dev/rollup';
-        import { tsdown } from '@embroider/addon-dev/tsdown';
+        import { Addon } from '@embroider/addon-dev/tsdown';
 
         const addon = new Addon({
           srcDir: 'src',
           destDir: 'dist',
         });
 
-        export default defineConfig(
-          tsdown(addon, {
-            publicEntrypoints: ['components/**/*.js'],
-            appReexports: ['components/**/*.js'],
-            declarations: false,
-            plugins: [
-              babel({ babelHelpers: 'bundled', extensions: ['.js', '.hbs', '.gjs'] }),
-            ],
-          })
-        );
+        export default defineConfig({
+          ...addon.output({ declarations: false }),
+          entry: addon.publicEntrypoints(['components/**/*.js']),
+          plugins: [
+            addon.appReexports(['components/**/*.js']),
+            addon.dependencies(),
+            addon.hbs(),
+            addon.gjs(),
+            addon.clean(),
+            babel({ babelHelpers: 'bundled', extensions: ['.js', '.hbs', '.gjs'] }),
+          ],
+        });
       `,
       src: {
         components: {

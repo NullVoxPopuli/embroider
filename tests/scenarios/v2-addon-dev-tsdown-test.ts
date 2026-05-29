@@ -48,8 +48,7 @@ appScenarios
       'tsdown.config.js': `
         import { babel } from '@rollup/plugin-babel';
         import { defineConfig } from 'tsdown';
-        import { Addon } from '@embroider/addon-dev/rollup';
-        import { tsdown } from '@embroider/addon-dev/tsdown';
+        import { Addon } from '@embroider/addon-dev/tsdown';
         import { resolve, dirname } from 'path';
 
         const addon = new Addon({
@@ -61,71 +60,67 @@ appScenarios
           'components/demo/namespace-me.js': 'components/demo/namespace/namespace-me.js',
         };
 
-        export default defineConfig(
-          tsdown(addon, {
-            publicEntrypoints: [
-              'components/**/*.js',
-              'asset-examples/**/*.js',
-            ],
-            entryExclude: ['**/-excluded/**/*'],
+        export default defineConfig({
+          // JS addon: no declarations. .xyz is a custom (non-css) asset handled
+          // by the plugin below; tell rolldown to treat it as js so keepAssets
+          // can capture it.
+          ...addon.output({ declarations: false, loader: { '.xyz': 'js' } }),
 
-            appReexports: {
-              include: ['components/**/*.js'],
+          entry: addon.publicEntrypoints([
+            'components/**/*.js',
+            'asset-examples/**/*.js',
+          ], { exclude: ['**/-excluded/**/*'] }),
+
+          plugins: [
+            addon.appReexports(['components/**/*.js'], {
               mapFilename: (name) => reexportMappings[name] || name,
               exclude: ['**/-excluded/**/*'],
-            },
+            }),
 
-            // JS addon: no declarations.
-            declarations: false,
+            addon.dependencies(),
 
-            hbs: {
-              excludeColocation: ['**/just-a-template.hbs'],
-            },
+            addon.hbs({ excludeColocation: ['**/just-a-template.hbs'] }),
 
-            keepAssets: [
-              { include: ['**/*.css'] },
-              // exercises keepAssets for generated files that have exports
-              { include: ['**/*.{xyz,png}'], exports: 'default' },
-            ],
+            addon.gjs(),
 
-            // .xyz is a custom (non-css) asset handled by the plugin below;
-            // tell rolldown to treat it as js so keepAssets can capture it.
-            loader: { '.xyz': 'js' },
+            addon.keepAssets(['**/*.css']),
+            // exercises keepAssets for generated files that have exports
+            addon.keepAssets(['**/*.{xyz,png}'], 'default'),
 
-            publicAssets: [['public']],
+            addon.publicAssets('public'),
 
-            plugins: [
-              babel({ babelHelpers: 'bundled', extensions: ['.js', '.hbs', '.gjs'] }),
+            addon.clean(),
 
-              {
-                name: 'virtual-css',
-                resolveId(source, importer) {
-                  if (source.endsWith('virtual.css')) {
-                    return { id: resolve(dirname(importer), source) }
-                  }
-                },
-                load(id) {
-                  if (id.endsWith('virtual.css')) {
-                    return '.my-blue-example { color: blue }'
-                  }
+            babel({ babelHelpers: 'bundled', extensions: ['.js', '.hbs', '.gjs'] }),
+
+            {
+              name: 'virtual-css',
+              resolveId(source, importer) {
+                if (source.endsWith('virtual.css')) {
+                  return { id: resolve(dirname(importer), source) }
                 }
               },
-              {
-                name: 'custom-plugin',
-                resolveId(source, importer) {
-                  if (source.endsWith('.xyz')) {
-                    return { id: resolve(dirname(importer), source) }
-                  }
-                },
-                load(id) {
-                  if (id.endsWith('.xyz')) {
-                    return 'Custom Content';
-                  }
+              load(id) {
+                if (id.endsWith('virtual.css')) {
+                  return '.my-blue-example { color: blue }'
+                }
+              }
+            },
+            {
+              name: 'custom-plugin',
+              resolveId(source, importer) {
+                if (source.endsWith('.xyz')) {
+                  return { id: resolve(dirname(importer), source) }
                 }
               },
-            ],
-          })
-        );
+              load(id) {
+                if (id.endsWith('.xyz')) {
+                  return 'Custom Content';
+                }
+              }
+            },
+          ],
+        });
       `,
       lib: {
         'custom-transform.js': `
