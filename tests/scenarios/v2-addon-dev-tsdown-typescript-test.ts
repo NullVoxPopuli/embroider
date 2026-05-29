@@ -28,18 +28,6 @@ appScenarios
     addon.pkg['ember-addon']['app-js'] = {};
 
     merge(addon.files, {
-      'babel.config.json': `
-        {
-          "plugins": [
-            "@babel/plugin-transform-typescript",
-            "@embroider/addon-dev/template-colocation-plugin",
-            "@babel/plugin-transform-class-static-block",
-            ["babel-plugin-ember-template-compilation", { "targetFormat": "hbs" }],
-            ["@babel/plugin-proposal-decorators", { "legacy": true }],
-            ["@babel/plugin-transform-class-properties"]
-          ]
-        }
-      `,
       'tsconfig.json': `
         {
           "compilerOptions": {
@@ -57,7 +45,6 @@ appScenarios
         }
       `,
       'tsdown.config.js': `
-        import { babel } from '@rollup/plugin-babel';
         import { defineConfig } from 'tsdown';
         import { Addon } from '@embroider/addon-dev/tsdown';
 
@@ -66,6 +53,9 @@ appScenarios
           destDir: 'dist',
         });
 
+        // No babel needed for a .gts/.ts addon: rolldown/oxc strips TypeScript,
+        // and content-tag (via addon.gjs()) compiles <template>. babel is only
+        // needed for co-located .hbs components or custom template transforms.
         export default defineConfig({
           // tsdown emits the declarations (via dts) - no glint/ember-tsc step.
           ...addon.output({ declarations: true }),
@@ -78,10 +68,6 @@ appScenarios
             addon.hbs(),
             addon.gjs(),
             addon.clean(),
-            babel({
-              babelHelpers: 'inline',
-              extensions: ['.js', '.ts', '.gjs', '.gts', '.hbs'],
-            }),
           ],
         });
       `,
@@ -118,14 +104,6 @@ appScenarios
 
     addon.linkDependency('@embroider/addon-shim', { baseDir: __dirname });
     addon.linkDependency('@embroider/addon-dev', { baseDir: __dirname });
-    addon.linkDependency('@babel/runtime', { baseDir: __dirname });
-    addon.linkDevDependency('@babel/core', { baseDir: __dirname });
-    addon.linkDevDependency('@babel/plugin-transform-typescript', { baseDir: __dirname });
-    addon.linkDevDependency('@babel/plugin-transform-class-static-block', { baseDir: __dirname });
-    addon.linkDevDependency('@babel/plugin-transform-class-properties', { baseDir: __dirname });
-    addon.linkDevDependency('@babel/plugin-proposal-decorators', { baseDir: __dirname });
-    addon.linkDependency('babel-plugin-ember-template-compilation', { baseDir: __dirname });
-    addon.linkDevDependency('@rollup/plugin-babel', { baseDir: __dirname });
     addon.linkDevDependency('content-tag', { baseDir: __dirname });
     addon.linkDevDependency('tsdown', { baseDir: __dirname });
     addon.linkDevDependency('typescript', { baseDir: __dirname });

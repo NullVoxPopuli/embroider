@@ -53,14 +53,10 @@ To use it:
    - @embroider/addon-dev
    - tsdown
    - content-tag
-   - @babel/core
-   - @rollup/plugin-babel
 
 2. Copy the `./sample-tsdown.config.js` in this repo to your own `tsdown.config.js`.
-3. Copy the `./sample-babel.config.json` in this repo to your own `babel.config.json`.
 
 ```js
-import { babel } from '@rollup/plugin-babel';
 import { defineConfig } from 'tsdown';
 import { Addon } from '@embroider/addon-dev/tsdown';
 
@@ -76,9 +72,15 @@ export default defineConfig({
     addon.gjs(),
     addon.keepAssets(['**/*.css']),
     addon.clean(),
-    babel({ babelHelpers: 'bundled', extensions: ['.js', '.ts', '.gjs', '.gts', '.hbs'] }),
   ],
 });
+```
+
+Unlike the rollup setup, **babel is not required** for `.gjs`/`.gts`/`.ts` addons: rolldown/oxc strips TypeScript, and `addon.gjs()` (content-tag) compiles `<template>`. You only need babel — `@babel/core`, `@rollup/plugin-babel`, a `babel.config.json`, and the relevant babel plugins — when your addon uses **co-located `.hbs`** components (`@embroider/addon-dev/template-colocation-plugin`) or custom template transforms (`babel-plugin-ember-template-compilation`). In that case add a babel plugin to the `plugins` array, e.g.:
+
+```js
+import { babel } from '@rollup/plugin-babel';
+// ...plugins: [ ..., babel({ babelHelpers: 'bundled', extensions: ['.js', '.ts', '.gjs', '.gts', '.hbs'] }) ]
 ```
 
 The `Addon` exposes:

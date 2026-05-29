@@ -1,4 +1,3 @@
-import { babel } from '@rollup/plugin-babel';
 import { defineConfig } from 'tsdown';
 import { Addon } from '@embroider/addon-dev/tsdown';
 
@@ -37,12 +36,11 @@ export default defineConfig({
     // Remove leftover build artifacts when starting a new build.
     addon.clean(),
 
-    // This babel config should *not* apply presets or compile away ES modules.
-    // It exists only for development niceties like template colocation. By
-    // default it loads babel.config.json.
-    babel({
-      babelHelpers: 'bundled',
-      extensions: ['.js', '.ts', '.gjs', '.gts', '.hbs'],
-    }),
+    // No babel needed for .gjs/.gts/.ts. If your addon uses co-located .hbs
+    // components or custom template transforms, also add `babel.config.json`
+    // and @rollup/plugin-babel, e.g.:
+    //
+    //   import { babel } from '@rollup/plugin-babel';
+    //   babel({ babelHelpers: 'bundled', extensions: ['.js', '.ts', '.gjs', '.gts', '.hbs'] }),
   ],
 });
