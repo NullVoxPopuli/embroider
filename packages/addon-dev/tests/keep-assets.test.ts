@@ -153,6 +153,54 @@ describe('keep-assets source maps', () => {
     expect(findAsset(output, 'styles.css.map')).toBeTruthy();
   });
 
+  test('kept CSS is final before generateBundle runs', async () => {
+    // rolldown does not carry edits made in generateBundle into its output,
+    // so other plugins' generateBundle hooks must already see the annotation
+    const seen: Record<string, string> = {};
+    const observer: Plugin = {
+      name: 'test-observer',
+      generateBundle(_options, bundle) {
+        for (const [fileName, file] of Object.entries(bundle)) {
+          if (file.type === 'asset') seen[fileName] = String(file.source);
+        }
+      },
+    };
+    const bundle = await rollup({
+      input: 'entry',
+      plugins: [
+        stubModules(DEFAULT_MODULES),
+        observer,
+        keepAssets({ from: FROM, include: ['**/*.css'] }),
+      ],
+    });
+    await bundle.generate({ format: 'es', sourcemap: true });
+    await bundle.close();
+
+    expect(seen['styles.css']).toContain(
+      '/*# sourceMappingURL=styles.css.map */'
+    );
+    expect(seen['styles.css.map']).toBeTruthy();
+  });
+
+  test('each output of one bundle gets the CSS for its own sourcemap setting', async () => {
+    const bundle = await rollup({
+      input: 'entry',
+      plugins: [
+        stubModules(DEFAULT_MODULES),
+        keepAssets({ from: FROM, include: ['**/*.css'] }),
+      ],
+    });
+    const withMaps = await bundle.generate({ format: 'es', sourcemap: true });
+    const withoutMaps = await bundle.generate({ format: 'es' });
+    await bundle.close();
+
+    expect(findAsset(withMaps.output, 'styles.css')).toContain(
+      '/*# sourceMappingURL=styles.css.map */'
+    );
+    expect(findAsset(withoutMaps.output, 'styles.css')).toBe(SCOPED_CSS);
+    expect(findAsset(withoutMaps.output, 'styles.css.map')).toBeUndefined();
+  });
+
   test('absolute paths in `sources` are rebased relative to the emitted map', async () => {
     const { output } = await build({
       modules: {
