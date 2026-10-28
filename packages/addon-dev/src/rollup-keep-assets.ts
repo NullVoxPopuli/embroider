@@ -82,8 +82,9 @@ export default function keepAssets({
         if (upstreamMap) {
           if (annotationFor(assetFileName)) {
             // an earlier plugin (e.g. one that rewrites CSS) produced a real
-            // map for this asset. Stash it in the module meta; generateBundle
-            // emits it alongside the asset for each output that wants maps.
+            // map for this asset. Stash both in the module meta.
+            // renderStart emits them for each output,
+            // because the bytes depend on that output's `sourcemap` setting.
             preservedMap = rebaseSources(upstreamMap, id, assetFileName);
           } else {
             // we have no comment syntax for this file type, so the upstream
@@ -95,20 +96,23 @@ export default function keepAssets({
         }
       }
 
-      let ref = this.emitFile({
-        type: 'asset',
-        fileName: assetFileName,
-        source: output,
-      });
+      if (!preservedMap) {
+        this.emitFile({
+          type: 'asset',
+          fileName: assetFileName,
+          source: output,
+        });
+      }
 
+      let call = `${marker}(${JSON.stringify(assetFileName)})`;
       let replacement: string;
       if (exports === '*') {
-        replacement = `export * from ${marker}("${ref}")`;
+        replacement = `export * from ${call}`;
       } else if (exports === 'default') {
-        replacement = `export default ${marker}("${ref}")`;
+        replacement = `export default ${call}`;
       } else {
         // side-effect only
-        replacement = `${marker}("${ref}")`;
+        replacement = call;
       }
 
       return {
@@ -118,6 +122,7 @@ export default function keepAssets({
           ? {
               'keep-assets': {
                 ...ourMeta,
+                source: code,
                 sourceMap: preservedMap,
                 assetFileName,
               },
@@ -126,40 +131,35 @@ export default function keepAssets({
       };
     },
 
-    // maps captured during transform are emitted here so that each output's
-    // own `sourcemap` setting controls whether (and how) they appear.
-    generateBundle(options, bundle) {
-      if (!options.sourcemap) {
-        return;
-      }
+    // an asset's bytes must be final when it is emitted: rollup and rolldown
+    // do not support edits to the bundle in generateBundle.
+    renderStart(options) {
       for (let id of this.getModuleIds()) {
         let meta = this.getModuleInfo(id)?.meta?.['keep-assets'];
         if (!meta?.sourceMap) {
           continue;
         }
         let fileName: string = meta.assetFileName;
-        let asset = bundle[fileName];
-        if (asset?.type !== 'asset' || typeof asset.source !== 'string') {
-          continue;
-        }
+        let source: string = meta.source;
         let annotate = annotationFor(fileName)!;
         let json = JSON.stringify(meta.sourceMap);
         if (options.sourcemap === 'inline') {
-          asset.source += annotate(
+          source += annotate(
             `data:application/json;charset=utf-8;base64,${Buffer.from(
               json
             ).toString('base64')}`
           );
-        } else {
+        } else if (options.sourcemap) {
           this.emitFile({
             type: 'asset',
             fileName: `${fileName}.map`,
             source: json,
           });
           if (options.sourcemap !== 'hidden') {
-            asset.source += annotate(`${basename(fileName)}.map`);
+            source += annotate(`${basename(fileName)}.map`);
           }
         }
+        this.emitFile({ type: 'asset', fileName, source });
       }
     },
 
@@ -172,9 +172,9 @@ export default function keepAssets({
       const magic = new MagicString(code);
 
       magic.replaceAll(
-        new RegExp(`${marker}\\("([^"]+)"\\)`, 'g'),
-        (_match: string, ref: string) => {
-          let assetFileName = this.getFileName(ref);
+        new RegExp(`${marker}\\(("(?:[^"\\\\]|\\\\.)*")\\)`, 'g'),
+        (_match: string, quotedFileName: string) => {
+          let assetFileName: string = JSON.parse(quotedFileName);
           let relativeName =
             './' + relative(dirname(chunk.fileName), assetFileName);
           return getName(relativeName) ?? '';
